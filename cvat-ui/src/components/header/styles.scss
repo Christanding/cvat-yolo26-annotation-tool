@@ -64,13 +64,6 @@
     display: flex;
     justify-content: flex-end;
     align-items: center;
-
-    > a.ant-btn {
-        span[role='img'] {
-            font-size: 24px;
-            line-height: 24px;
-        }
-    }
 }
 
 .cvat-header-menu-user-dropdown {
@@ -87,10 +80,6 @@
         padding: $grid-unit-size;
     }
 
-    .cvat-header-menu-user-dropdown-organization {
-        font-size: 10px;
-    }
-
     > div:nth-child(2) {
         max-width: $grid-unit-size * 15;
         height: $grid-unit-size * 5;
@@ -103,16 +92,6 @@
 
 .cvat-header-menu {
     width: $grid-unit-size * 24;
-}
-
-.cvat-header-menu-active-organization-item {
-    ::after {
-        content: ' \2713';
-        float: right;
-        margin-left: $grid-unit-size;
-    }
-
-    font-weight: bold;
 }
 
 .cvat-shortcuts-modal-window-table {

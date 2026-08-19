@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 import './styles.scss';
-import React, { useCallback, useEffect } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { useHistory, useLocation } from 'react-router';
 import { Row, Col } from 'antd/lib/grid';
@@ -14,14 +14,8 @@ import {
     InfoCircleOutlined,
     LoadingOutlined,
     LogoutOutlined,
-    GithubOutlined,
-    QuestionCircleOutlined,
     CaretDownOutlined,
-    ControlOutlined,
     UserOutlined,
-    TeamOutlined,
-    PlusOutlined,
-    MailOutlined,
 } from '@ant-design/icons';
 import Layout from 'antd/lib/layout';
 import Button from 'antd/lib/button';
@@ -31,15 +25,10 @@ import Text from 'antd/lib/typography/Text';
 
 import config from 'config';
 
-import { Organization } from 'cvat-core-wrapper';
-import CVATTooltip from 'components/common/cvat-tooltip';
 import CVATLogo from 'components/common/cvat-logo';
 import { switchSettingsModalVisible as switchSettingsModalVisibleAction } from 'actions/settings-actions';
-import { logoutAsync } from 'actions/auth-actions';
 import { shortcutsActions, registerComponentShortcuts } from 'actions/shortcuts-actions';
-import { getOrganizationsAsync, organizationActions } from 'actions/organization-actions';
 import { AboutState, CombinedState } from 'reducers';
-import { useIsMounted, usePlugins } from 'utils/hooks';
 import GlobalHotKeys, { KeyMap } from 'utils/mousetrap-react';
 import { ShortcutScope } from 'utils/enums';
 import { subKeyMap } from 'utils/component-subkeymap';
@@ -52,35 +41,24 @@ interface StateToProps {
     switchSettingsShortcut: string;
     settingsModalVisible: boolean;
     shortcutsModalVisible: boolean;
-    changePasswordDialogShown: boolean;
     logoutFetching: boolean;
-    isAnalyticsPluginActive: boolean;
-    organizationFetching: boolean;
-    currentOrganization: any | null;
-    organizationsList: Organization[];
-    organizationsListFetching: boolean;
-    organizationsListSearch: string;
-    organizationsListPage: number;
 }
 
 interface DispatchToProps {
-    onLogout: () => void;
     switchSettingsModalVisible: (visible: boolean) => void;
     switchShortcutsModalVisible: (visible: boolean) => void;
-    fetchOrganizations: () => void;
-    openSelectOrganizationModal: (onSelectOrgCallback: (org: Organization | null) => void) => void;
 }
 
 const componentShortcuts = {
     SWITCH_SHORTCUTS: {
-        name: 'Show shortcuts',
-        description: 'Open/hide the list of available shortcuts',
+        name: '显示快捷键',
+        description: '打开或关闭快捷键列表',
         sequences: ['f1'],
         scope: ShortcutScope.GENERAL,
     },
     SWITCH_SETTINGS: {
-        name: 'Show settings',
-        description: 'Open/hide settings dialog',
+        name: '显示设置',
+        description: '打开或关闭设置窗口',
         sequences: ['f2'],
         scope: ShortcutScope.GENERAL,
     },
@@ -90,25 +68,10 @@ registerComponentShortcuts(componentShortcuts);
 
 function mapStateToProps(state: CombinedState): StateToProps {
     const {
-        auth: {
-            user,
-            fetching: logoutFetching,
-            showChangePasswordDialog: changePasswordDialogShown,
-        },
-        plugins: { list },
+        auth: { user, fetching: logoutFetching },
         about,
         shortcuts: { normalizedKeyMap, keyMap, visibleShortcutsHelp: shortcutsModalVisible },
         settings: { showDialog: settingsModalVisible },
-        organizations: {
-            fetching: organizationFetching,
-            current: currentOrganization,
-            currentArray: organizationsList,
-            currentArrayFetching: organizationsListFetching,
-            gettingQuery: {
-                search: organizationsListSearch,
-                page: organizationsListPage,
-            },
-        },
     } = state;
 
     return {
@@ -118,34 +81,17 @@ function mapStateToProps(state: CombinedState): StateToProps {
         keyMap,
         settingsModalVisible,
         shortcutsModalVisible,
-        changePasswordDialogShown,
         logoutFetching,
-        isAnalyticsPluginActive: list.ANALYTICS,
-        organizationFetching,
-        currentOrganization,
-        organizationsList,
-        organizationsListFetching,
-        organizationsListSearch,
-        organizationsListPage,
     };
 }
 
 function mapDispatchToProps(dispatch: any): DispatchToProps {
     return {
-        onLogout: (): void => dispatch(logoutAsync()),
         switchShortcutsModalVisible: (visible: boolean): void => dispatch(
             shortcutsActions.switchShortcutsModalVisible(visible),
         ),
         switchSettingsModalVisible: (visible: boolean): void => dispatch(
             switchSettingsModalVisibleAction(visible),
-        ),
-        fetchOrganizations: (): void => dispatch(
-            getOrganizationsAsync({}),
-        ),
-        openSelectOrganizationModal: (
-            onSelectOrgCallback: (org: Organization | null) => void,
-        ): void => dispatch(
-            organizationActions.openSelectOrganizationModal(onSelectOrgCallback),
         ),
     };
 }
@@ -161,31 +107,11 @@ function HeaderComponent(props: Props): JSX.Element {
         settingsModalVisible,
         shortcutsModalVisible,
         switchSettingsShortcut,
-        isAnalyticsPluginActive,
-        organizationFetching,
-        currentOrganization,
-        organizationsList,
-        organizationsListFetching,
-        organizationsListSearch,
-        organizationsListPage,
         switchSettingsModalVisible,
         switchShortcutsModalVisible,
-        fetchOrganizations,
-        openSelectOrganizationModal,
     } = props;
 
-    const {
-        CHANGELOG_URL, LICENSE_URL, GITHUB_URL, GUIDE_URL, DISCORD_URL,
-    } = config;
-
-    const isMounted = useIsMounted();
-
-    useEffect(() => {
-        if (isMounted()) {
-            fetchOrganizations();
-        }
-    }, []);
-
+    const { LICENSE_URL, GITHUB_URL } = config;
     const history = useHistory();
     const location = useLocation();
 
@@ -204,199 +130,61 @@ function HeaderComponent(props: Props): JSX.Element {
         },
     };
 
-    const aboutPlugins = usePlugins((state: CombinedState) => state.plugins.components.about.links.items, props);
-    const aboutLinks: [JSX.Element, number][] = [];
-    aboutLinks.push([(
-        <Col key='changelog'>
-            <a href={CHANGELOG_URL} target='_blank' rel='noopener noreferrer'>
-                What&apos;s new?
-            </a>
-        </Col>
-    ), 0]);
-    aboutLinks.push([(
-        <Col key='license'>
-            <a href={LICENSE_URL} target='_blank' rel='noopener noreferrer'>
-                MIT License
-            </a>
-        </Col>
-    ), 10]);
-    aboutLinks.push([(
-        <Col key='discord'>
-            <a href={DISCORD_URL} target='_blank' rel='noopener noreferrer'>
-                Find us on Discord
-            </a>
-        </Col>
-    ), 20]);
-
-    aboutLinks.push(...aboutPlugins.map(({ component: Component, weight }, index: number) => (
-        [<Component key={index} targetProps={props} />, weight] as [JSX.Element, number]
-    )));
-
-    const showAboutModal = useCallback((): void => {
+    const showAboutModal = (): void => {
         Modal.info({
-            title: `${about.server.name}`,
+            title: '关于 CVAT',
             content: (
                 <div>
-                    <p>{`${about.server.description}`}</p>
+                    <p>本软件基于 CVAT Community 构建，遵循 MIT 许可证。</p>
                     <p>
-                        <Text strong>Server version:</Text>
+                        <Text strong>服务端版本：</Text>
                         <Text type='secondary'>{` ${about.server.version}`}</Text>
                     </p>
                     <p>
-                        <Text strong>UI version:</Text>
+                        <Text strong>界面版本：</Text>
                         <Text type='secondary'>{` ${about.packageVersion.ui}`}</Text>
                     </p>
                     <Row justify='space-around'>
-                        { aboutLinks.sort((item1, item2) => item1[1] - item2[1])
-                            .map((item) => item[0]) }
+                        <Col>
+                            <a href={LICENSE_URL} target='_blank' rel='noopener noreferrer'>
+                                MIT 许可证
+                            </a>
+                        </Col>
+                        <Col>
+                            <a href={GITHUB_URL} target='_blank' rel='noopener noreferrer'>
+                                CVAT 上游源码
+                            </a>
+                        </Col>
                     </Row>
                 </div>
             ),
-            width: 800,
-            okButtonProps: {
-                style: {
-                    width: '100px',
-                },
-            },
+            width: 600,
+            okText: '关闭',
         });
-    }, [about]);
-
-    const closeSettings = useCallback(() => {
-        switchSettingsModalVisible(false);
-    }, []);
-
-    const resetOrganization = (): void => {
-        localStorage.removeItem('currentOrganization');
-        if (/(webhooks)|(\d+)/.test(window.location.pathname)) {
-            window.location.pathname = '/';
-        } else {
-            window.location.reload();
-        }
     };
 
-    const setNewOrganization = (organization: Organization | null): void => {
-        if (currentOrganization && !organization) {
-            resetOrganization();
-        } else if (organization && (!currentOrganization || currentOrganization.slug !== organization.slug)) {
-            localStorage.setItem('currentOrganization', organization.slug);
-            if (/\d+/.test(window.location.pathname)) {
-                // a resource is opened (task/job/etc.)
-                window.location.pathname = '/';
-            } else {
-                window.location.reload();
-            }
-        }
-    };
-
-    const plugins = usePlugins((state: CombinedState) => state.plugins.components.header.userMenu.items, props);
-
-    const menuItems: [NonNullable<MenuProps['items']>[0], number][] = [];
-    if (user.isStaff) {
-        menuItems.push([{
-            key: 'admin_page',
-            icon: <ControlOutlined />,
-            onClick: (): void => {
-                window.open('/admin', '_blank');
-            },
-            label: 'Admin page',
-        }, 0]);
-    }
-
-    menuItems.push([{
-        key: 'profile',
-        icon: <UserOutlined />,
-        onClick: (): void => {
-            history.push('/profile');
-        },
-        label: 'Profile',
-    }, 10]);
-
-    const viewType: 'menu' | 'list' = (organizationsList?.length || 0) > 5 ? 'list' : 'menu';
-
-    menuItems.push([{
-        key: 'organization',
-        icon: organizationFetching || organizationsListFetching ? <LoadingOutlined /> : <TeamOutlined />,
-        label: 'Organization',
-        disabled: organizationFetching || organizationsListFetching,
-        children: [
-            ...(currentOrganization ? [{
-                key: 'open_organization',
-                icon: <SettingOutlined />,
-                label: 'Settings',
-                className: 'cvat-header-menu-open-organization',
-                onClick: () => history.push('/organization'),
-            }] : []), {
-                key: 'invitations',
-                icon: <MailOutlined />,
-                label: 'Invitations',
-                className: 'cvat-header-menu-organization-invitations-item',
-                onClick: () => history.push('/invitations'),
-            }, {
-                key: 'create_organization',
-                icon: <PlusOutlined />,
-                label: 'Create',
-                className: 'cvat-header-menu-create-organization',
-                onClick: () => history.push('/organizations/create'),
-            },
-            ...(!!organizationsList && viewType === 'list' ? [{
-                key: 'switch_organization',
-                label: 'Switch organization',
-                onClick: () => {
-                    openSelectOrganizationModal(setNewOrganization);
-                },
-            }] : []),
-            ...(!!organizationsList && viewType === 'menu' ? [{
-                type: 'divider' as const,
-            }, {
-                key: '$personal',
-                label: 'Personal workspace',
-                className: !currentOrganization ? 'cvat-header-menu-active-organization-item' : 'cvat-header-menu-organization-item',
-                onClick: resetOrganization,
-            }, ...organizationsList.map((organization: Organization) => ({
-                key: organization.slug,
-                onClick: () => setNewOrganization(organization),
-                className: currentOrganization?.slug === organization.slug ? 'cvat-header-menu-active-organization-item' : 'cvat-header-menu-organization-item',
-                label: organization.slug,
-            }))] : []),
-        ],
-    }, 20]);
-
-    menuItems.push([{
+    const menuItems: MenuProps['items'] = [{
         key: 'settings',
         icon: <SettingOutlined />,
         onClick: () => switchSettingsModalVisible(true),
-        title: `Press ${switchSettingsShortcut} to switch`,
-        label: 'Settings',
-    }, 30]);
-
-    menuItems.push([{
+        title: `按 ${switchSettingsShortcut} 打开或关闭设置`,
+        label: '设置',
+    }, {
         key: 'about',
         icon: <InfoCircleOutlined />,
-        onClick: () => showAboutModal(),
-        label: 'About',
-    }, 40]);
-
-    menuItems.push([{
+        onClick: showAboutModal,
+        label: '关于',
+    }, {
         key: 'logout',
         icon: logoutFetching ? <LoadingOutlined /> : <LogoutOutlined />,
         onClick: () => history.push('/auth/logout'),
-        label: 'Logout',
+        label: '退出登录',
         disabled: logoutFetching,
-    }, 50]);
+    }];
 
-    menuItems.push(...plugins
-        .map(({ component, weight }): typeof menuItems[0] => [
-            (component as (pluginProps?: any) => NonNullable<MenuProps['items']>[0])({ targetProps: props }),
-            weight,
-        ]),
-    );
-
-    const getButtonClassName = (value: string, highlightable = true): string => {
-        // eslint-disable-next-line security/detect-non-literal-regexp
-        const regex = new RegExp(`${value}$`);
-        const baseClass = `cvat-header-${value}-button cvat-header-button`;
-        return highlightable && location.pathname.match(regex) ?
-            `${baseClass} cvat-active-header-button` : baseClass;
+    const getButtonClassName = (name: string, path: string): string => {
+        const baseClass = `cvat-header-${name}-button cvat-header-button`;
+        return location.pathname === path ? `${baseClass} cvat-active-header-button` : baseClass;
     };
 
     return (
@@ -405,134 +193,38 @@ function HeaderComponent(props: Props): JSX.Element {
             <div className='cvat-left-header'>
                 <CVATLogo />
                 <Button
-                    className={getButtonClassName('projects')}
+                    className={getButtonClassName('tasks', '/tasks')}
                     type='link'
-                    value='projects'
-                    href='/projects?page=1'
-                    onClick={(event: React.MouseEvent): void => {
-                        event.preventDefault();
-                        history.push('/projects');
-                    }}
-                >
-                    Projects
-                </Button>
-                <Button
-                    className={getButtonClassName('tasks')}
-                    type='link'
-                    value='tasks'
                     href='/tasks?page=1'
                     onClick={(event: React.MouseEvent): void => {
                         event.preventDefault();
                         history.push('/tasks');
                     }}
                 >
-                    Tasks
+                    任务列表
                 </Button>
                 <Button
-                    className={getButtonClassName('jobs')}
+                    className={getButtonClassName('create-task', '/tasks/create')}
                     type='link'
-                    value='jobs'
-                    href='/jobs?page=1'
+                    href='/tasks/create'
                     onClick={(event: React.MouseEvent): void => {
                         event.preventDefault();
-                        history.push('/jobs');
+                        history.push('/tasks/create');
                     }}
                 >
-                    Jobs
+                    新建任务
                 </Button>
-                <Button
-                    className={getButtonClassName('cloudstorages')}
-                    type='link'
-                    value='cloudstorages'
-                    href='/cloudstorages?page=1'
-                    onClick={(event: React.MouseEvent): void => {
-                        event.preventDefault();
-                        history.push('/cloudstorages');
-                    }}
-                >
-                    Cloud Storages
-                </Button>
-                <Button
-                    className={getButtonClassName('requests')}
-                    type='link'
-                    value='requests'
-                    href='/requests?page=1'
-                    onClick={(event: React.MouseEvent): void => {
-                        event.preventDefault();
-                        history.push('/requests');
-                    }}
-                >
-                    Requests
-                </Button>
-                <Button
-                    className={getButtonClassName('models')}
-                    type='link'
-                    value='models'
-                    href='/models'
-                    onClick={(event: React.MouseEvent): void => {
-                        event.preventDefault();
-                        history.push('/models');
-                    }}
-                >
-                    Models
-                </Button>
-                {isAnalyticsPluginActive && user.hasAnalyticsAccess ? (
-                    <Button
-                        className={getButtonClassName('analytics', false)}
-                        type='link'
-                        href='/analytics'
-                        onClick={(event: React.MouseEvent): void => {
-                            event.preventDefault();
-                            window.open('/analytics', '_blank');
-                        }}
-                    >
-                        Analytics
-                    </Button>
-                ) : null}
             </div>
             <div className='cvat-right-header'>
-                <CVATTooltip overlay='Click to open repository'>
-                    <Button
-                        icon={<GithubOutlined />}
-                        size='large'
-                        className='cvat-open-repository-button cvat-header-button'
-                        type='link'
-                        href={GITHUB_URL}
-                        onClick={(event: React.MouseEvent): void => {
-                            event.preventDefault();
-                            window.open(GITHUB_URL, '_blank');
-                        }}
-                    />
-                </CVATTooltip>
-                <CVATTooltip overlay='Click to open guide'>
-                    <Button
-                        icon={<QuestionCircleOutlined />}
-                        size='large'
-                        className='cvat-open-guide-button cvat-header-button'
-                        type='link'
-                        href={GUIDE_URL}
-                        onClick={(event: React.MouseEvent): void => {
-                            event.preventDefault();
-                            window.open(GUIDE_URL, '_blank');
-                        }}
-                    />
-                </CVATTooltip>
                 <Dropdown
                     trigger={['click']}
                     destroyPopupOnHide
                     placement='bottomRight'
                     menu={{
-                        items: menuItems.sort((menuItem1, menuItem2) => menuItem1[1] - menuItem2[1])
-                            .map((menuItem) => menuItem[0]),
-                        triggerSubMenuAction: 'click',
+                        items: menuItems,
                         className: 'cvat-header-menu',
                     }}
                     className='cvat-header-menu-user-dropdown'
-                    onOpenChange={(open: boolean) => {
-                        if (open && (organizationsListSearch || organizationsListPage !== 1)) {
-                            fetchOrganizations();
-                        }
-                    }}
                 >
                     <span>
                         <UserOutlined className='cvat-header-dropdown-icon' />
@@ -542,19 +234,15 @@ function HeaderComponent(props: Props): JSX.Element {
                                     {user.username.length > 14 ? `${user.username.slice(0, 10)} ...` : user.username}
                                 </Text>
                             </Col>
-                            { currentOrganization ? (
-                                <Col span={24}>
-                                    <Text className='cvat-header-menu-user-dropdown-organization'>
-                                        {currentOrganization.slug}
-                                    </Text>
-                                </Col>
-                            ) : null }
                         </Row>
                         <CaretDownOutlined className='cvat-header-dropdown-icon' />
                     </span>
                 </Dropdown>
             </div>
-            <SettingsModal visible={settingsModalVisible} onClose={closeSettings} />
+            <SettingsModal
+                visible={settingsModalVisible}
+                onClose={() => switchSettingsModalVisible(false)}
+            />
         </Layout.Header>
     );
 }

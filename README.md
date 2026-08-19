@@ -23,14 +23,14 @@
 
 ## 当前阶段
 
-CVAT 上游源码已固定并合入开发分支，最小本地部署覆盖层已经建立。随后按 `REQUIREMENTS.md` 逐项实现和验证。
+CVAT 上游源码已固定并合入开发分支，最小本地部署覆盖层和固定工作区扫描 API 已经建立。随后按 `REQUIREMENTS.md` 逐项实现和验证。
 
 ## 开发启动
 
 开发环境先根据 `.env.example` 配置工作区和持久化目录，再运行：
 
 ```powershell
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 这是开发阶段的启动方式。最终用户不需要执行命令，正式交付仍使用离线安装程序和桌面快捷方式。

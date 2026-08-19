@@ -147,9 +147,12 @@ INSTALLED_APPS = [
     "cvat.apps.redis_handler",
     "cvat.apps.consensus",
     "cvat.apps.access_tokens",
+    "cvat.apps.local_workspace",
 ]
 
 SITE_ID = 1
+
+LOCAL_WORKSPACE_ROOT = Path(os.getenv("CVAT_LOCAL_WORKSPACE_ROOT", "/home/django/share"))
 
 
 DEFAULT_DB_BULK_CREATE_BATCH_SIZE = int(os.getenv("CVAT_DEFAULT_DB_BULK_CREATE_BATCH_SIZE", 5000))

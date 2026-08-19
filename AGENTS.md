@@ -55,3 +55,10 @@ MVP 产品需求已冻结并进入实现阶段。正式范围见 `REQUIREMENTS.m
 - `.cvat-local` 在共享目录视图中使用临时挂载遮蔽，不能作为标注源目录出现。
 - `docker-compose.local.yml` 使用 Compose `!override` 关闭默认分析依赖，安装程序必须检查所装 Docker Compose 支持该语法。
 - 默认不启动 `upstream-analytics` 和 `upstream-extra` 配置组；不要在 MVP 安装流程中启用它们。
+- `APP_VERSION` 控制本项目 Server/UI 镜像标签；正式离线包必须构建 `linux/amd64` 镜像，不能把开发机的 ARM 镜像交付给 Windows x64 用户。
+
+## Implementation Details
+
+- `GET /api/local/workspace` 返回固定工作区内的文件夹、JPG、PNG、MP4、MOV和 ZIP；`path` 使用工作区相对路径，`recursive` 控制是否递归。
+- 工作区 API 需要登录，只返回相对路径和文件类型，不暴露宿主机绝对路径。
+- 路径解析必须阻止绝对路径、`..` 越界和指向工作区外的符号链接，并以大小写无关方式排除 `.cvat-local`。

@@ -2,6 +2,9 @@
 # Copyright (C) CVAT.ai Corporation
 # SPDX-License-Identifier: MIT
 
+x-local-server-image: &local-server-image local-annotator/server:${APP_VERSION:-dev}
+x-local-ui-image: &local-ui-image local-annotator/ui:${APP_VERSION:-dev}
+
 x-cvat-state-volumes: &cvat-state-volumes
   - type: bind
     source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/data"
@@ -60,16 +63,21 @@ services:
         target: /var/lib/kvrocks
 
   cvat_server:
+    image: *local-server-image
+    build:
+      context: .
     depends_on: !override
       <<: *cvat-core-dependencies
       cvat_opa:
         condition: service_started
     environment:
       CVAT_ANALYTICS: '0'
+      CVAT_LOCAL_WORKSPACE_ROOT: /home/django/share
       DJANGO_LOG_SERVER_HOST: ''
     volumes: *cvat-state-and-share-volumes
 
   cvat_worker_utils:
+    image: *local-server-image
     depends_on: !override
       <<: *cvat-core-dependencies
     environment:
@@ -77,6 +85,7 @@ services:
     volumes: *cvat-state-volumes
 
   cvat_worker_import:
+    image: *local-server-image
     depends_on: !override
       <<: *cvat-core-dependencies
     environment:
@@ -84,6 +93,7 @@ services:
     volumes: *cvat-state-and-share-volumes
 
   cvat_worker_export:
+    image: *local-server-image
     depends_on: !override
       <<: *cvat-core-dependencies
     environment:
@@ -91,6 +101,7 @@ services:
     volumes: *cvat-state-and-share-volumes
 
   cvat_worker_annotation:
+    image: *local-server-image
     depends_on: !override
       <<: *cvat-core-dependencies
     environment:
@@ -98,6 +109,7 @@ services:
     volumes: *cvat-state-and-share-volumes
 
   cvat_worker_webhooks:
+    image: *local-server-image
     profiles:
       - upstream-extra
     depends_on: !override
@@ -107,6 +119,7 @@ services:
     volumes: *cvat-state-volumes
 
   cvat_worker_quality_reports:
+    image: *local-server-image
     profiles:
       - upstream-extra
     depends_on: !override
@@ -116,6 +129,7 @@ services:
     volumes: *cvat-state-volumes
 
   cvat_worker_chunks:
+    image: *local-server-image
     depends_on: !override
       <<: *cvat-core-dependencies
     environment:
@@ -123,6 +137,7 @@ services:
     volumes: *cvat-state-and-share-volumes
 
   cvat_worker_consensus:
+    image: *local-server-image
     profiles:
       - upstream-extra
     depends_on: !override
@@ -146,3 +161,9 @@ services:
   cvat_grafana:
     profiles:
       - upstream-analytics
+
+  cvat_ui:
+    image: *local-ui-image
+    build:
+      context: .
+      dockerfile: Dockerfile.ui

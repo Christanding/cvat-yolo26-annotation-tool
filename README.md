@@ -6,6 +6,7 @@
 
 - 已完成 Git 仓库初始化。
 - 已确定以 CVAT Community 为底座，采用 Windows 本地 Docker Compose 单用户部署。
+- 已确定使用内部离线大安装包；用户预先安装 Docker Desktop，日常通过桌面快捷方式启动。
 - MVP 产品需求已冻结，详见 [REQUIREMENTS.md](REQUIREMENTS.md)。
 - 尚未引入 CVAT 源码或开始功能开发。
 

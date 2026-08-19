@@ -6,11 +6,12 @@
 
 ## Current Phase
 
-MVP 产品需求已冻结，尚未开始功能开发。正式范围见 `REQUIREMENTS.md`；下一阶段是核对并固定 CVAT Community 上游版本，然后制定最小实现计划。
+MVP 产品需求已冻结并进入实现阶段。正式范围见 `REQUIREMENTS.md`；CVAT Community `v2.73.0` 已作为上游基线合入，版本与升级边界见 `UPSTREAM.md`。
 
 ## Architecture Decision
 
 - 基于 CVAT Community 进行最小化二次开发，采用 Web 访问方式，并优先使用 Docker Compose 部署。
+- 固定上游版本为 CVAT Community `v2.73.0`，不跟随浮动的 `develop` 或 `latest`。
 - 产品按 Windows 10/11 x64 单用户本地实例交付，每名内部用户独立安装，不建设团队协作服务器。
 - MVP 使用固定本地工作根目录，任务直接引用其中的源文件，不复制或修改原始媒体。
 - 应用通过内部离线大安装包交付；Docker Desktop 由用户从官方渠道预先安装，Edge为首选浏览器，Chrome为回退。

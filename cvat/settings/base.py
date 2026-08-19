@@ -147,7 +147,7 @@ INSTALLED_APPS = [
     "cvat.apps.redis_handler",
     "cvat.apps.consensus",
     "cvat.apps.access_tokens",
-    "cvat.apps.local_workspace",
+    "cvat.apps.local_workspace.apps.LocalWorkspaceConfig",
 ]
 
 SITE_ID = 1

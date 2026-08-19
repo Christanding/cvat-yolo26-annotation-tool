@@ -31,6 +31,7 @@ import {
 } from 'cvat-core-wrapper';
 import StorageField from 'components/storage/storage-field';
 import { createAction, ActionUnion } from 'utils/redux';
+import { YOLO26_PACKAGE_FORMAT } from 'utils/local-api';
 
 const { confirm } = Modal;
 
@@ -357,6 +358,21 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
     const isTask = useCallback((): boolean => instance instanceof core.classes.Task, [instance]);
 
     useEffect(() => {
+        if (isTask()) {
+            const loader = importers.find((item) => item.name === YOLO26_PACKAGE_FORMAT) ?? null;
+            dispatch(reducerActions.setSelectedLoader(loader));
+            dispatch(reducerActions.setSelectedFormat(YOLO26_PACKAGE_FORMAT));
+            dispatch(reducerActions.setUseDefaultSettings(true));
+            dispatch(reducerActions.setImportMode('replace'));
+            form.setFieldsValue({
+                selectedFormat: YOLO26_PACKAGE_FORMAT,
+                useDefaultSettings: true,
+                importMode: 'replace',
+            });
+        }
+    }, [instance, importers]);
+
+    useEffect(() => {
         if (instance) {
             dispatch(reducerActions.setDefaultStorageLocation(instance.sourceStorage.location));
             dispatch(reducerActions.setDefaultStorageCloudId(instance.sourceStorage.cloudStorageId));
@@ -422,7 +438,7 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                 <p className='ant-upload-drag-icon'>
                     <InboxOutlined />
                 </p>
-                <p className='ant-upload-text'>Click or drag file to this area</p>
+                <p className='ant-upload-text'>点击选择或拖入 ZIP 标注包</p>
             </Upload.Dragger>
         </Form.Item>
     );
@@ -497,10 +513,11 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                     uploadParams.importMode,
                 ));
             const resToPrint = uploadParams.resource.charAt(0).toUpperCase() + uploadParams.resource.slice(1);
-            const description = `${resToPrint} import was started for ${instanceType}.` +
-            ' You can check progress [here](/requests).';
+            const description = isTask() ? '正在校验并导入标注包。' :
+                `${resToPrint} import was started for ${instanceType}.` +
+                ' You can check progress [here](/requests).';
             Notification.info({
-                message: `${resToPrint} import started`,
+                message: isTask() ? '已开始导入' : `${resToPrint} import started`,
                 description: (
                     <CVATMarkdown history={history}>{description}</CVATMarkdown>
                 ),
@@ -512,8 +529,10 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
     const confirmUpload = (): void => {
         const isAppend = uploadParams.importMode === 'append';
         const annotationEntity = isTask() ? 'task' : 'job';
-        const title = isAppend ? 'Append annotations?' : 'Replace existing annotations?';
-        const content = isAppend ?
+        const title = isTask() ? '导入并替换当前标注？' :
+            (isAppend ? 'Append annotations?' : 'Replace existing annotations?');
+        const content = isTask() ?
+            '导入包必须与当前任务的图片和类别完全对应。现有标注将被替换。' : isAppend ?
             `Uploaded annotations will be added to the existing annotations in this ${annotationEntity}. ` +
                 'Existing annotations will not be removed.' :
             `This will remove the current annotations in this ${annotationEntity} and ` +
@@ -530,8 +549,8 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                 type: 'primary',
                 danger: true,
             },
-            okText: isAppend ? 'Append annotations' : 'Replace annotations',
-            cancelText: 'Cancel',
+            okText: isTask() ? '确认导入' : (isAppend ? 'Append annotations' : 'Replace annotations'),
+            cancelText: isTask() ? '取消' : 'Cancel',
         });
     };
 
@@ -547,7 +566,7 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
         [instance, uploadParams],
     );
 
-    const loadFromLocal = (useDefaultSettings && (
+    const loadFromLocal = isTask() || (useDefaultSettings && (
         defaultStorageLocation === StorageLocation.LOCAL ||
         defaultStorageLocation === null
     )) || (!useDefaultSettings && selectedSourceStorageLocation === StorageLocation.LOCAL);
@@ -557,7 +576,7 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
             title={(
                 <>
                     <Text strong>
-                        {`Import ${resource} to ${instanceType}`}
+                        {isTask() ? '导入 YOLO26 Detect 标注包' : `Import ${resource} to ${instanceType}`}
                     </Text>
                     {
                         instance instanceof core.classes.Project && (
@@ -577,6 +596,8 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
             open={!!instance}
             onCancel={closeModal}
             onOk={() => form.submit()}
+            okText={isTask() ? '导入' : 'OK'}
+            cancelText={isTask() ? '取消' : 'Cancel'}
             className='cvat-modal-import-dataset'
             destroyOnClose
         >
@@ -592,14 +613,15 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
             >
                 <Form.Item
                     name='selectedFormat'
-                    label='Import format'
-                    rules={[{ required: true, message: 'Format must be selected' }]}
+                    label='导入格式'
+                    rules={[{ required: true, message: '必须选择导入格式' }]}
                     hasFeedback
                 >
                     <Select
                         placeholder={`Select ${resource} format`}
                         className='cvat-modal-import-select'
                         virtual={false}
+                        disabled={isTask()}
                         onChange={(format: string) => {
                             const [loader] = importers.filter(
                                 (importer: any): boolean => importer.name === format,
@@ -613,6 +635,7 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                             .filter(
                                 (importer: any): boolean => (
                                     instance !== null &&
+                                    (!isTask() || importer.name === YOLO26_PACKAGE_FORMAT) &&
                                     (!instance?.dimension || importer.dimension === instance.dimension)
                                 ),
                             )
@@ -630,7 +653,7 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                             )}
                     </Select>
                 </Form.Item>
-                <Space className='cvat-modal-import-switch-conv-mask-to-poly-container'>
+                {!isTask() && <Space className='cvat-modal-import-switch-conv-mask-to-poly-container'>
                     <Form.Item
                         name='convMaskToPoly'
                         valuePropName='checked'
@@ -646,8 +669,8 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                     <CVATTooltip title='The option is relevant for formats that work with masks only'>
                         <QuestionCircleOutlined />
                     </CVATTooltip>
-                </Space>
-                <Space className='cvat-modal-import-switch-use-default-storage-container'>
+                </Space>}
+                {!isTask() && <Space className='cvat-modal-import-switch-use-default-storage-container'>
                     <Form.Item
                         name='useDefaultSettings'
                         valuePropName='checked'
@@ -663,8 +686,8 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                     <CVATTooltip title={helpMessage}>
                         <QuestionCircleOutlined />
                     </CVATTooltip>
-                </Space>
-                {isAnnotation() && (
+                </Space>}
+                {isAnnotation() && !isTask() && (
                     <Form.Item
                         name='importMode'
                         label={(
@@ -696,7 +719,7 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                         </Radio.Group>
                     </Form.Item>
                 )}
-                {!useDefaultSettings && (
+                {!isTask() && !useDefaultSettings && (
                     <StorageField
                         locationName={['sourceStorage', 'location']}
                         selectCloudStorageName={['sourceStorage', 'cloudStorageId']}

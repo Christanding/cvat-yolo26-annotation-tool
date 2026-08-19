@@ -40,6 +40,8 @@ import LayerInsertDropArea from './drag-and-drop/layer-insert-drop-area';
 import LayerSection from './drag-and-drop/layer-section';
 
 interface Props {
+    taskID: number;
+    frameNumber: number;
     workspace: Workspace;
     statesHidden: boolean;
     statesLocked: boolean;
@@ -68,6 +70,8 @@ interface Props {
 
 function ObjectListComponent(props: Props): JSX.Element {
     const {
+        taskID,
+        frameNumber,
         workspace,
         statesHidden,
         statesLocked,
@@ -322,6 +326,8 @@ function ObjectListComponent(props: Props): JSX.Element {
                 switchHiddenAllShortcut={switchHiddenAllShortcut}
                 showGroundTruth={showGroundTruth}
                 count={objectStates.length}
+                taskID={taskID}
+                frameNumber={frameNumber}
                 changeStatesOrdering={changeStatesOrdering}
                 lockAllStates={lockAllStates}
                 unlockAllStates={unlockAllStates}

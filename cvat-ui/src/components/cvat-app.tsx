@@ -38,6 +38,7 @@ import ModelsPageComponent from 'components/models-page/models-page';
 import TasksPageContainer from 'containers/tasks-page/tasks-page';
 import CreateTaskPageContainer from 'containers/create-task-page/create-task-page';
 import VideoExtractionPage from 'components/video-extraction-page/video-extraction-page';
+import PackageImportPage from 'components/package-import-page/package-import-page';
 import TaskPageComponent from 'components/task-page/task-page';
 
 import ProjectsPageComponent from 'components/projects-page/projects-page';
@@ -529,6 +530,7 @@ class CVATApplication extends React.PureComponent<CVATAppProps & RouteComponentP
                                         <Route exact path='/tasks' component={TasksPageContainer} />
                                         <Route exact path='/tasks/create' component={CreateTaskPageContainer} />
                                         <Route exact path='/videos/extract' component={VideoExtractionPage} />
+                                        <Route exact path='/packages/import' component={PackageImportPage} />
                                         <Route exact path='/tasks/:id' component={TaskPageComponent} />
                                         <Route exact path='/tasks/:tid/quality-control' component={QualityControlPage} />
                                         <Route exact path='/tasks/:tid/analytics' component={AnalyticsReportPage} />

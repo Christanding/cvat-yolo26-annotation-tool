@@ -31,6 +31,7 @@ interface LabelsEditorProps {
     showLabelType?: boolean;
     enableRawEditor?: boolean;
     showAttributes?: boolean;
+    allowDelete?: boolean;
 }
 
 interface LabelsEditorState {
@@ -281,6 +282,7 @@ export default class LabelsEditor extends React.PureComponent<LabelsEditorProps,
             showLabelType = true,
             enableRawEditor = true,
             showAttributes = true,
+            allowDelete = true,
         } = this.props;
         const {
             savedLabels, unsavedLabels, constructorMode, labelForUpdate, creatorType, submitting,
@@ -308,6 +310,7 @@ export default class LabelsEditor extends React.PureComponent<LabelsEditorProps,
                     }}
                     enableSkeletonCreator={enableSkeletonCreator}
                     enableFromModelCreator={enableFromModelCreator}
+                    allowDelete={allowDelete}
                 />
             );
         } else if (constructorMode === ConstructorMode.UPDATE && labelForUpdate !== null) {

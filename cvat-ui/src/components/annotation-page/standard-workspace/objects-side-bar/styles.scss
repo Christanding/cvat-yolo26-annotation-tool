@@ -254,6 +254,9 @@
 }
 
 .cvat-objects-sidebar-states-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     background: $objects-bar-tabs-color;
     padding: $grid-unit-size;
     line-height: $grid-unit-size * 3;

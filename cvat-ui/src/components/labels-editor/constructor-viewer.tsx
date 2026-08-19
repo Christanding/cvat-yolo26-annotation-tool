@@ -19,6 +19,7 @@ interface ConstructorViewerProps {
     onCreate: (creatorType: CreatorType) => void;
     enableSkeletonCreator?: boolean;
     enableFromModelCreator?: boolean;
+    allowDelete?: boolean;
 }
 
 function ConstructorViewer(props: ConstructorViewerProps): JSX.Element {
@@ -29,6 +30,7 @@ function ConstructorViewer(props: ConstructorViewerProps): JSX.Element {
         labels,
         enableSkeletonCreator = true,
         enableFromModelCreator = true,
+        allowDelete = true,
     } = props;
 
     const list: JSX.Element[] = [
@@ -69,6 +71,7 @@ function ConstructorViewer(props: ConstructorViewerProps): JSX.Element {
             <ConstructorViewerItem
                 onUpdate={onUpdate}
                 onDelete={onDelete}
+                allowDelete={allowDelete}
                 label={label}
                 key={label.id}
                 color={label.color}

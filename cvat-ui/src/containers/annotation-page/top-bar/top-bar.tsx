@@ -7,6 +7,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
+import notification from 'antd/lib/notification';
 
 import {
     changeFrameAsync,
@@ -42,6 +43,9 @@ import { writeLatestFrame } from 'utils/remember-latest-frame';
 import { finishDraw } from 'utils/drawing';
 import { toClipboard } from 'utils/to-clipboard';
 import { Chapter } from 'cvat-core/src/frames';
+import { completeFrame } from 'utils/local-api';
+
+const AUTO_SAVE_DELAY_MS = 1500;
 
 interface StateToProps {
     chapters: Chapter[];
@@ -71,6 +75,7 @@ interface StateToProps {
     ranges: string;
     activeControl: ActiveControl;
     annotationFilters: object[];
+    annotationVersion: string;
     initialOpenGuide: boolean;
     navigationType: NavigationType;
     showSearchFrameByName: boolean;
@@ -80,7 +85,7 @@ interface DispatchToProps {
     onChangeFrame(frame: number, fillBuffer?: boolean, frameStep?: number): void;
     onSwitchPlay(playing: boolean): void;
     switchShowSearchPallet(visible: boolean): void;
-    onSaveAnnotation(): void;
+    onSaveAnnotation(): Promise<void>;
     showStatistics(sessionInstance: Job): void;
     showFilters(): void;
     undo(): void;
@@ -182,6 +187,7 @@ function mapStateToProps(state: CombinedState): StateToProps {
         activeControl,
         ranges,
         annotationFilters,
+        annotationVersion: `${history.undo.length}:${history.redo.length}`,
         initialOpenGuide,
         navigationType,
         showSearchFrameByName,
@@ -196,8 +202,8 @@ function mapDispatchToProps(dispatch: any): DispatchToProps {
         onSwitchPlay(playing: boolean): void {
             dispatch(switchPlay(playing));
         },
-        onSaveAnnotation(): void {
-            dispatch(saveAnnotationsAsync());
+        onSaveAnnotation(): Promise<void> {
+            return dispatch(saveAnnotationsAsync());
         },
         showStatistics(sessionInstance: Job): void {
             dispatch(collectStatisticsAsync(sessionInstance));
@@ -263,12 +269,15 @@ type Props = StateToProps & DispatchToProps & RouteComponentProps;
 class AnnotationTopBarContainer extends React.PureComponent<Props> {
     private inputFrameRef: React.RefObject<HTMLInputElement>;
     private autoSaveInterval: number | undefined;
+    private autoSaveTimeout: number | undefined;
     private isWaitingForPlayDelay: boolean;
+    private frameChangePending: boolean;
     private unblock: any;
 
     constructor(props: Props) {
         super(props);
         this.isWaitingForPlayDelay = false;
+        this.frameChangePending = false;
         this.inputFrameRef = React.createRef<HTMLInputElement>();
     }
 
@@ -277,6 +286,7 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
             autoSaveInterval, history, jobInstance, setForceExitAnnotationFlag,
         } = this.props;
         this.autoSaveInterval = window.setInterval(this.autoSave.bind(this), autoSaveInterval);
+        this.scheduleAutoSave(true);
 
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
@@ -290,7 +300,7 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
                 location.pathname !== `/tasks/${taskID}/jobs/${jobID}` &&
                 !forceExit
             ) {
-                return 'You have unsaved changes, please confirm leaving this page.';
+                return '当前标注尚未保存，确定要离开吗？';
             }
 
             if (forceExit) {
@@ -304,17 +314,21 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
     }
 
     public componentDidUpdate(prevProps: Props): void {
-        const { autoSaveInterval } = this.props;
+        const { autoSaveInterval, annotationVersion, autoSave } = this.props;
 
         if (autoSaveInterval !== prevProps.autoSaveInterval) {
             if (this.autoSaveInterval) window.clearInterval(this.autoSaveInterval);
             this.autoSaveInterval = window.setInterval(this.autoSave.bind(this), autoSaveInterval);
         }
+        this.scheduleAutoSave(
+            annotationVersion !== prevProps.annotationVersion || autoSave !== prevProps.autoSave,
+        );
         this.handlePlayIfNecessary();
     }
 
     public componentWillUnmount(): void {
         window.clearInterval(this.autoSaveInterval);
+        window.clearTimeout(this.autoSaveTimeout);
         window.removeEventListener('beforeunload', this.beforeUnloadCallback);
         this.unblock();
     }
@@ -469,13 +483,19 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
             }
 
             if (navigationType === NavigationType.REGULAR) {
-                this.changeFrame(newFrame);
+                await this.changeFrame(newFrame);
             } else if (navigationType === NavigationType.FILTERED) {
-                searchAnnotations(jobInstance, newFrame, startFrame);
+                if (await this.saveCurrentFrame(false)) {
+                    searchAnnotations(jobInstance, newFrame, startFrame);
+                }
             } else if (navigationType === NavigationType.CHAPTER) {
-                searchChapters(jobInstance, newFrame, startFrame);
+                if (await this.saveCurrentFrame(false)) {
+                    searchChapters(jobInstance, newFrame, startFrame);
+                }
             } else {
-                searchAnnotations(jobInstance, newFrame, startFrame, { isEmptyFrame: true });
+                if (await this.saveCurrentFrame(false)) {
+                    searchAnnotations(jobInstance, newFrame, startFrame, { isEmptyFrame: true });
+                }
             }
         }
     };
@@ -499,14 +519,22 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
             }
 
             if (navigationType === NavigationType.REGULAR) {
-                this.changeFrame(newFrame);
+                await this.changeFrame(newFrame, true);
             } else if (navigationType === NavigationType.FILTERED) {
-                searchAnnotations(jobInstance, newFrame, stopFrame);
+                if (await this.saveCurrentFrame(true)) {
+                    searchAnnotations(jobInstance, newFrame, stopFrame);
+                }
             } else if (navigationType === NavigationType.CHAPTER) {
-                searchChapters(jobInstance, newFrame, stopFrame);
+                if (await this.saveCurrentFrame(true)) {
+                    searchChapters(jobInstance, newFrame, stopFrame);
+                }
             } else {
-                searchAnnotations(jobInstance, newFrame, stopFrame, { isEmptyFrame: true });
+                if (await this.saveCurrentFrame(true)) {
+                    searchAnnotations(jobInstance, newFrame, stopFrame, { isEmptyFrame: true });
+                }
             }
+        } else {
+            await this.saveCurrentFrame(true);
         }
     };
 
@@ -681,7 +709,7 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
 
         writeLatestFrame(jobInstance.id, frameNumber);
         if (jobInstance.annotations.hasUnsavedChanges() && !forceExit) {
-            const confirmationMessage = 'You have unsaved changes, please confirm leaving this page.';
+            const confirmationMessage = '当前标注尚未保存，确定要离开吗？';
 
             // eslint-disable-next-line no-param-reassign
             event.returnValue = confirmationMessage;
@@ -695,24 +723,66 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
     };
 
     private autoSave(): void {
-        const { autoSave, saving, onSaveAnnotation } = this.props;
-
-        if (autoSave && !saving) {
-            onSaveAnnotation();
-        }
-    }
-
-    private changeFrame(frame: number): void {
         const {
-            onChangeFrame, onSaveAnnotation, saving, jobInstance,
+            autoSave, saving, onSaveAnnotation, jobInstance,
         } = this.props;
-        if (isAbleToChangeFrame(frame)) {
-            if (!saving && jobInstance.annotations.hasUnsavedChanges()) {
-                onSaveAnnotation();
-            }
-            onChangeFrame(frame);
+
+        if (autoSave && !saving && jobInstance.annotations.hasUnsavedChanges()) {
+            void onSaveAnnotation().catch(() => undefined);
         }
     }
+
+    private scheduleAutoSave(reset: boolean): void {
+        const {
+            autoSave, saving, jobInstance,
+        } = this.props;
+        const shouldSchedule = autoSave && !saving && jobInstance.annotations.hasUnsavedChanges();
+        if (!shouldSchedule || reset) {
+            window.clearTimeout(this.autoSaveTimeout);
+            this.autoSaveTimeout = undefined;
+        }
+        if (shouldSchedule && this.autoSaveTimeout === undefined) {
+            this.autoSaveTimeout = window.setTimeout(() => {
+                this.autoSaveTimeout = undefined;
+                this.autoSave();
+            }, AUTO_SAVE_DELAY_MS);
+        }
+    }
+
+    private saveCurrentFrame = async (markCompleted: boolean): Promise<boolean> => {
+        const {
+            onSaveAnnotation, saving, jobInstance, frameNumber,
+        } = this.props;
+        if (saving || this.frameChangePending) return false;
+
+        this.frameChangePending = true;
+        try {
+            if (jobInstance.annotations.hasUnsavedChanges()) {
+                await onSaveAnnotation();
+            }
+            if (markCompleted) {
+                await completeFrame(jobInstance.taskId, frameNumber);
+            }
+            return true;
+        } catch (_error) {
+            notification.error({
+                message: '无法保存当前图片',
+                description: '当前图片未切换，请检查服务状态后重试。',
+            });
+            return false;
+        } finally {
+            this.frameChangePending = false;
+        }
+    };
+
+    private changeFrame = async (frame: number, markCompleted = false): Promise<void> => {
+        const { frameNumber, onChangeFrame } = this.props;
+        if (frame !== frameNumber && isAbleToChangeFrame(frame)) {
+            if (await this.saveCurrentFrame(markCompleted)) {
+                onChangeFrame(frame);
+            }
+        }
+    };
 
     public render(): JSX.Element {
         const {

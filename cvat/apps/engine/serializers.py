@@ -705,6 +705,13 @@ class LabelSerializer(SublabelSerializer):
 
         if validated_data.get("deleted"):
             assert validated_data["id"]  # must be checked in the validate()
+            if isinstance(parent_instance, models.Task):
+                from cvat.apps.local_workspace.reviews import categories_locked
+
+                if categories_locked(parent_instance):
+                    raise serializers.ValidationError(
+                        "已开始标注，不能删除类别；可以新增或重命名类别。"
+                    )
             db_label.delete()
             return None
 

@@ -17,11 +17,12 @@ interface ConstructorViewerItemProps {
     color?: string;
     onUpdate: (label: LabelOptColor) => void;
     onDelete: (label: LabelOptColor) => void;
+    allowDelete?: boolean;
 }
 
 export default function ConstructorViewerItem(props: ConstructorViewerItemProps): JSX.Element {
     const {
-        color, label, onUpdate, onDelete,
+        color, label, onUpdate, onDelete, allowDelete = true,
     } = props;
 
     const backgroundColor = color || config.NEW_LABEL_COLOR;
@@ -41,7 +42,7 @@ export default function ConstructorViewerItem(props: ConstructorViewerItemProps)
                     <EditOutlined />
                 </span>
             </CVATTooltip>
-            <CVATTooltip title='Delete label'>
+            {allowDelete && <CVATTooltip title='删除类别'>
                 <span
                     style={{ color: textColor }}
                     role='button'
@@ -51,7 +52,7 @@ export default function ConstructorViewerItem(props: ConstructorViewerItemProps)
                 >
                     <DeleteOutlined />
                 </span>
-            </CVATTooltip>
+            </CVATTooltip>}
         </div>
     );
 }

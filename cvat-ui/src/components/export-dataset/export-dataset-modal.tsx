@@ -26,6 +26,7 @@ import { shallowEqual } from 'utils/redux';
 import { CombinedState } from 'reducers';
 import { exportActions, exportDatasetAsync } from 'actions/export-actions';
 import { makeBulkOperationAsync } from 'actions/bulk-actions';
+import { getTaskReview, YOLO26_PACKAGE_FORMAT } from 'utils/local-api';
 import {
     Dumper, ProjectOrTaskOrJob, Job, Project,
     Storage, StorageData, StorageLocation, Task,
@@ -144,16 +145,20 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
         } else if (instance instanceof Task || instance instanceof Job) {
             if (instance instanceof Task) {
                 newInstanceType = 'task';
+                initialSelectedFormat = YOLO26_PACKAGE_FORMAT;
             } else {
                 newInstanceType = 'job';
             }
-            if (instance.mode === 'interpolation' && instance.dimension === '2d') {
+            if (!(instance instanceof Task) && instance.mode === 'interpolation' && instance.dimension === '2d') {
                 initialSelectedFormat = 'CVAT for video 1.1';
-            } else if (instance.mode === 'annotation' && instance.dimension === '2d') {
+            } else if (!(instance instanceof Task) && instance.mode === 'annotation' && instance.dimension === '2d') {
                 initialSelectedFormat = 'CVAT for images 1.1';
             }
         }
-        form.setFieldsValue({ selectedFormat: initialSelectedFormat });
+        form.setFieldsValue({
+            selectedFormat: initialSelectedFormat,
+            saveImages: instance instanceof Task,
+        });
         setSelectedFormat(initialSelectedFormat);
         setNameTemplate(`dataset_${newInstanceType}_{{id}}`);
         setInstanceType(newInstanceType);
@@ -183,8 +188,39 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
     };
 
     const handleExport = useCallback(
-        (values: FormValues): void => {
-            const exportExtension = getExportExtension(dumpers, values.selectedFormat);
+        async (values: FormValues): Promise<void> => {
+            const localTaskExport = instance instanceof Task;
+            const exportValues = localTaskExport ? {
+                ...values,
+                selectedFormat: YOLO26_PACKAGE_FORMAT,
+                saveImages: true,
+                targetStorage: { location: StorageLocation.LOCAL },
+            } : values;
+            const exportExtension = getExportExtension(dumpers, exportValues.selectedFormat);
+
+            if (localTaskExport) {
+                const tasks = (isBulkMode ? selectedInstances : [instance]).filter(
+                    (item): item is Task => item instanceof Task,
+                );
+                try {
+                    const summaries = await Promise.all(tasks.map((task) => getTaskReview(task.id)));
+                    const blocked = summaries.reduce((total, summary) => total + summary.unreviewed, 0);
+                    if (blocked) {
+                        Notification.error({
+                            message: '暂时不能导出',
+                            description: `仍有 ${blocked} 张图片未检查，请完成后重试。`,
+                        });
+                        return;
+                    }
+                } catch (_error) {
+                    Notification.error({
+                        message: '无法检查导出条件',
+                        description: '请确认本地服务正常后重试。',
+                    });
+                    return;
+                }
+            }
+
             if (isBulkMode) {
                 dispatch(makeBulkOperationAsync<ProjectOrTaskOrJob>(
                     selectedInstances,
@@ -197,12 +233,12 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
                         dispatch(
                             exportDatasetAsync(
                                 inst,
-                                values.selectedFormat as string,
-                                values.saveImages,
+                                exportValues.selectedFormat as string,
+                                exportValues.saveImages,
                                 false, // always custom storage in bulk
                                 new Storage({
-                                    location: values.targetStorage?.location,
-                                    cloudStorageId: values.targetStorage?.cloudStorageId,
+                                    location: exportValues.targetStorage?.location,
+                                    cloudStorageId: exportValues.targetStorage?.cloudStorageId,
                                 }),
                                 exportName,
                             ),
@@ -213,7 +249,7 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
                     ),
                 ));
                 closeModal();
-                const resource = values.saveImages ? 'Dataset' : 'Annotations';
+                const resource = exportValues.saveImages ? 'Dataset' : 'Annotations';
                 const description =
                     `Bulk ${resource.toLowerCase()} export was started. ` +
                     'You can check progress and download the file [here](/requests).';
@@ -230,22 +266,26 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
             dispatch(
                 exportDatasetAsync(
                     instance as ProjectOrTaskOrJob,
-                    values.selectedFormat as string,
-                    values.saveImages,
-                    useDefaultTargetStorage,
-                    useDefaultTargetStorage ? new Storage({
-                        location: defaultStorageLocation,
-                        cloudStorageId: defaultStorageCloudId,
-                    }) : new Storage(targetStorage),
-                    values.customName ? appendExportExtension(values.customName, exportExtension) : undefined,
+                    exportValues.selectedFormat as string,
+                    exportValues.saveImages,
+                    localTaskExport || useDefaultTargetStorage,
+                    localTaskExport ? new Storage({ location: StorageLocation.LOCAL }) : (
+                        useDefaultTargetStorage ? new Storage({
+                            location: defaultStorageLocation,
+                            cloudStorageId: defaultStorageCloudId,
+                        }) : new Storage(targetStorage)
+                    ),
+                    exportValues.customName ? appendExportExtension(exportValues.customName, exportExtension) : undefined,
                 ),
             );
             closeModal();
-            const resource = values.saveImages ? 'Dataset' : 'Annotations';
-            const description = `${resource} export was started for ${instanceType}. ` +
-            'You can check progress and download the file [here](/requests).';
+            const resource = exportValues.saveImages ? 'Dataset' : 'Annotations';
+            const description = localTaskExport ?
+                '标注包正在生成，完成后会自动下载。' :
+                `${resource} export was started for ${instanceType}. ` +
+                'You can check progress and download the file [here](/requests).';
             Notification.info({
-                message: `${resource} export started`,
+                message: localTaskExport ? '已开始导出标注包' : `${resource} export started`,
                 description: (
                     <CVATMarkdown history={history}>{description}</CVATMarkdown>
                 ),
@@ -265,6 +305,8 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
             dumpers,
         ],
     );
+
+    const localTaskExport = instance instanceof Task;
 
     const exportExtension = getExportExtension(dumpers, selectedFormat);
     let exampleName = appendExportExtension(`dataset_${instanceType}_1`, exportExtension);
@@ -289,12 +331,14 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
                         {`Export ${selectedInstances.length} ${instanceType}s as datasets`}
                     </Text>
                 ) : (
-                    <Text strong>{`Export ${instanceType} as a dataset`}</Text>
+                    <Text strong>{localTaskExport ? '导出 YOLO26 Detect 标注包' : `Export ${instanceType} as a dataset`}</Text>
                 )
             }
             open={!!instance}
             onCancel={closeModal}
             onOk={() => form.submit()}
+            okText={localTaskExport ? '导出' : 'OK'}
+            cancelText={localTaskExport ? '取消' : 'Cancel'}
             className={`cvat-modal-export-${instanceType.split(' ')[0]}`}
             destroyOnClose
         >
@@ -312,14 +356,22 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
             >
                 <Form.Item
                     name='selectedFormat'
-                    label={<Text strong>Export format</Text>}
-                    rules={[{ required: true, message: 'Format must be selected' }]}
+                    label={<Text strong>导出格式</Text>}
+                    rules={[{ required: true, message: '必须选择导出格式' }]}
                 >
-                    <Select virtual={false} placeholder='Select dataset format' className='cvat-modal-export-select'>
+                    <Select
+                        virtual={false}
+                        placeholder='选择导出格式'
+                        className='cvat-modal-export-select'
+                        disabled={localTaskExport}
+                    >
                         {sortedDumpers
                             .filter(
-                                (dumper: Dumper): boolean => dumper.dimension === instance?.dimension ||
-                                    (instance instanceof Project && instance.dimension === null),
+                                (dumper: Dumper): boolean => (
+                                    (!localTaskExport || dumper.name === YOLO26_PACKAGE_FORMAT) &&
+                                    (dumper.dimension === instance?.dimension ||
+                                    (instance instanceof Project && instance.dimension === null))
+                                ),
                             )
                             .map(
                                 (dumper: Dumper): JSX.Element => (
@@ -335,7 +387,7 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
                             )}
                     </Select>
                 </Form.Item>
-                <Space>
+                {!localTaskExport && <Space>
                     <Form.Item
                         className='cvat-modal-export-switch-use-default-storage'
                         name='saveImages'
@@ -344,7 +396,7 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
                         <Switch className='cvat-modal-export-save-images' />
                     </Form.Item>
                     <Text strong>Save images</Text>
-                </Space>
+                </Space>}
                 {isBulkMode ? (
                     <Form.Item label={<Text strong>Name template</Text>} required>
                         <Input
@@ -369,15 +421,15 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
                         </Text>
                     </Form.Item>
                 ) : (
-                    <Form.Item label={<Text strong>Custom name</Text>} name='customName'>
+                    <Form.Item label={<Text strong>文件名</Text>} name='customName'>
                         <Input
-                            placeholder='Custom name for a dataset'
+                            placeholder='默认使用任务名称'
                             suffix={exportExtension}
                             className='cvat-modal-export-filename-input'
                         />
                     </Form.Item>
                 )}
-                <TargetStorageField
+                {!localTaskExport && <TargetStorageField
                     instanceId={instance ? instance.id : null}
                     switchDescription='Use default settings'
                     switchHelpMessage={helpMessage}
@@ -390,7 +442,7 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
                     onChangeStorage={(value: StorageData) => setTargetStorage(value)}
                     onChangeLocationValue={(value: StorageLocation) => { setTargetStorage({ location: value }); }}
                     disableSwitch={isBulkMode}
-                />
+                />}
             </Form>
         </Modal>
     );

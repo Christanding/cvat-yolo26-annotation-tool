@@ -13,6 +13,7 @@ import Title from 'antd/lib/typography/Title';
 import { getCore, Task } from 'cvat-core-wrapper';
 import Preview from 'components/common/preview';
 import LabelsEditor from 'components/labels-editor/labels-editor';
+import { getTaskReview } from 'utils/local-api';
 
 interface Props {
     task: Task;
@@ -24,10 +25,24 @@ const core = getCore();
 export default function DetailsComponent(props: Props): JSX.Element {
     const { task, onUpdateTask } = props;
     const [name, setName] = useState(task.name);
+    const [categoriesLocked, setCategoriesLocked] = useState<boolean>();
 
     useEffect(() => {
         setName(task.name);
     }, [task.name]);
+
+    useEffect(() => {
+        let active = true;
+        setCategoriesLocked(undefined);
+        getTaskReview(task.id).then((summary) => {
+            if (active) setCategoriesLocked(summary.reviewed > 0);
+        }).catch(() => {
+            if (active) setCategoriesLocked(true);
+        });
+        return () => {
+            active = false;
+        };
+    }, [task.id]);
 
     const owner = task.owner?.username;
     const created = dayjs(task.createdDate).format('YYYY年M月D日');
@@ -68,6 +83,11 @@ export default function DetailsComponent(props: Props): JSX.Element {
                     <Row className='cvat-task-details-labels' style={{ marginTop: 16 }}>
                         <Col span={24}>
                             <Text className='cvat-text-color'>类别</Text>
+                            {categoriesLocked && (
+                                <Text type='secondary' style={{ marginLeft: 8 }}>
+                                    已锁定类别编号和顺序，可继续新增或重命名
+                                </Text>
+                            )}
                             <LabelsEditor
                                 labels={task.labels.map((label) => label.toJSON())}
                                 enableSkeletonCreator={false}
@@ -75,6 +95,7 @@ export default function DetailsComponent(props: Props): JSX.Element {
                                 enableRawEditor={false}
                                 showLabelType={false}
                                 showAttributes={false}
+                                allowDelete={categoriesLocked === false}
                                 onSubmit={(labels): Promise<Task> => onUpdateTask(task, {
                                     labels: labels.map((labelData): any => new core.classes.Label(labelData)),
                                 })}

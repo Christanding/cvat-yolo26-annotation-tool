@@ -770,6 +770,8 @@ class ObjectsListContainer extends React.PureComponent<Props, State> {
             <>
                 <GlobalHotKeys keyMap={subKeyMap(componentShortcuts, keyMap)} handlers={handlers} />
                 <ObjectsListComponent
+                    taskID={this.props.jobInstance.taskId}
+                    frameNumber={this.props.frameNumber}
                     statesHidden={statesHidden}
                     statesLocked={statesLocked}
                     statesCollapsedAll={statesCollapsedAll}

@@ -225,6 +225,17 @@ function HeaderComponent(props: Props): JSX.Element {
                 >
                     视频抽帧
                 </Button>
+                <Button
+                    className={getButtonClassName('package-import', '/packages/import')}
+                    type='link'
+                    href='/packages/import'
+                    onClick={(event: React.MouseEvent): void => {
+                        event.preventDefault();
+                        history.push('/packages/import');
+                    }}
+                >
+                    导入
+                </Button>
             </div>
             <div className='cvat-right-header'>
                 <Dropdown

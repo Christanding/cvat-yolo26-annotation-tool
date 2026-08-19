@@ -3207,6 +3207,15 @@ class LabelViewSet(
                 code=status.HTTP_400_BAD_REQUEST,
             )
 
+        if instance.task:
+            from cvat.apps.local_workspace.reviews import categories_locked
+
+            if categories_locked(instance.task):
+                raise ValidationError(
+                    "已开始标注，不能删除类别；可以新增或重命名类别。",
+                    code=status.HTTP_400_BAD_REQUEST,
+                )
+
         if project := instance.project:
             project.touch()
             ProjectWriteSerializer(project).update_child_objects_on_labels_update(project)

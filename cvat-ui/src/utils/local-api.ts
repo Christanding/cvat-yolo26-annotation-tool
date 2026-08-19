@@ -39,6 +39,32 @@ export interface ExtractionStatus {
     error?: string;
 }
 
+export interface PackageImportStatus {
+    id: string;
+    status: string;
+    progress: number;
+    message?: string;
+    result?: { task_id: number };
+    error?: string;
+}
+
+export type FrameReviewStatus = 'unreviewed' | 'annotated' | 'empty';
+
+export interface FrameStatus {
+    status: FrameReviewStatus;
+}
+
+export interface TaskReviewSummary {
+    total: number;
+    reviewed: number;
+    annotated: number;
+    empty: number;
+    unreviewed: number;
+}
+
+export const FRAME_STATUS_UPDATED_EVENT = 'cvat-local-frame-status-updated';
+export const YOLO26_PACKAGE_FORMAT = 'YOLO26 Detect 标注包';
+
 export class LocalAPIError extends Error {
     public readonly status: number;
 
@@ -59,12 +85,13 @@ function getCookie(name: string): string | undefined {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const csrfToken = getCookie('csrftoken');
+    const isFormData = options.body instanceof FormData;
     const response = await fetch(path, {
         credentials: 'same-origin',
         ...options,
         headers: {
             Accept: 'application/vnd.cvat+json',
-            ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+            ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
             ...(csrfToken ? { 'X-CSRFTOKEN': csrfToken } : {}),
             ...options.headers,
         },
@@ -73,7 +100,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     if (!response.ok) {
         throw new LocalAPIError(
             response.status,
-            body.message || '请求失败，请稍后重试。',
+            body.message || body.detail || '请求失败，请稍后重试。',
             body.code,
         );
     }
@@ -99,4 +126,37 @@ export function createExtraction(parameters: ExtractionParameters): Promise<{ id
 
 export function getExtraction(id: string): Promise<ExtractionStatus> {
     return request<ExtractionStatus>(`/api/local/extractions/${encodeURIComponent(id)}`);
+}
+
+export function createPackageImport(name: string, file: File): Promise<{ id: string; status: string }> {
+    const form = new FormData();
+    form.append('name', name);
+    form.append('file', file);
+    return request('/api/local/packages', { method: 'POST', body: form });
+}
+
+export function getPackageImport(id: string): Promise<PackageImportStatus> {
+    return request<PackageImportStatus>(`/api/local/packages/${encodeURIComponent(id)}`);
+}
+
+export function getFrameStatus(taskID: number, frame: number): Promise<FrameStatus> {
+    return request<FrameStatus>(`/api/local/tasks/${taskID}/frames/${frame}/status`);
+}
+
+export async function completeFrame(taskID: number, frame: number): Promise<FrameStatus> {
+    const result = await request<FrameStatus>(`/api/local/tasks/${taskID}/frames/${frame}/status`, {
+        method: 'POST',
+    });
+    window.dispatchEvent(new CustomEvent(FRAME_STATUS_UPDATED_EVENT, {
+        detail: { taskID, frame, status: result.status },
+    }));
+    return result;
+}
+
+export function getTaskReview(taskID: number): Promise<TaskReviewSummary> {
+    return request<TaskReviewSummary>(`/api/local/tasks/${taskID}/review`);
+}
+
+export function completeTaskReview(taskID: number): Promise<TaskReviewSummary> {
+    return request<TaskReviewSummary>(`/api/local/tasks/${taskID}/review`, { method: 'POST' });
 }

@@ -84,6 +84,7 @@ datasets/
 runs/
 outputs/
 artifacts/
+/dist/
 *.pt
 *.pth
 *.onnx

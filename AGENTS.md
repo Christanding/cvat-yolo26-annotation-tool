@@ -6,7 +6,7 @@
 
 ## Current Phase
 
-MVP 产品需求已冻结并进入实现阶段。正式范围见 `REQUIREMENTS.md`；CVAT Community `v2.73.0` 已作为上游基线合入，版本与升级边界见 `UPSTREAM.md`。
+MVP 产品需求已冻结，核心功能代码已实现并进入 Windows 发布验收阶段。正式范围见 `REQUIREMENTS.md`；CVAT Community `v2.73.0` 已作为上游基线合入，版本与升级边界见 `UPSTREAM.md`。
 
 ## Architecture Decision
 
@@ -62,11 +62,14 @@ MVP 产品需求已冻结并进入实现阶段。正式范围见 `REQUIREMENTS.m
 - `GET /api/local/workspace` 返回固定工作区内的文件夹、JPG、PNG、MP4、MOV和 ZIP；`path` 使用工作区相对路径，`recursive` 控制是否递归。
 - 工作区 API 需要登录，只返回相对路径和文件类型，不暴露宿主机绝对路径。
 - 路径解析必须阻止绝对路径、`..` 越界和指向工作区外的符号链接，并以大小写无关方式排除 `.cvat-local`。
-- 顶部导航只显示已实现的产品入口；当前为“任务列表”“新建任务”和“视频抽帧”。不得为尚未实现的页面添加占位链接。
+- 顶部导航只显示“任务列表”“新建任务”“视频抽帧”和“导入”；图片标注与导出从具体任务进入，设置位于用户菜单。
 - “关于”窗口必须保留 CVAT Community、MIT 许可证和上游源码信息。
 - 新建任务默认使用“本地工作区”，并保留“拖拽上传”；远程 URL 与云存储入口在 MVP 中隐藏。
 - 本地工作区选择器通过 `/api/local/workspace` 读取受限文件列表，选中的相对路径仍按 CVAT `server_files` 流程创建任务。
 - `GET /api/local/videos` 递归发现工作区内的 MP4、MOV；`POST /api/local/extractions` 创建抽帧任务，`GET /api/local/extractions/<id>` 返回进度和统计。
 - 视频抽帧输出 PNG 到源视频同级的 `images/<视频名>/`，仅在当前视频内按“上一张保留帧”去重，覆盖前必须由用户确认。
 - 标注工作区仅暴露 Detect 矩形框所需工具；`A`/`D` 固定为上一张/下一张，切图前保存当前标注。
+- `GET/POST /api/local/tasks/<id>/frames/<frame>/status` 管理单图完成状态，`GET/POST /api/local/tasks/<id>/review` 返回或完成整任务图片检查状态。
+- `YOLO26 Detect 标注包` 是唯一产品导入导出格式；顶层 `POST /api/local/packages` 从 ZIP 创建任务，任务内导入用于覆盖当前标注。
+- Windows 离线安装源码位于 `installer/windows/`；构建产物位于已忽略的 `dist/windows/`，不得提交镜像归档或 `Setup.exe`。
 - 设置弹窗只显示当前图片框选流程需要的“图像浏览”和“标注界面”选项。

@@ -5,7 +5,9 @@
 ## 当前阶段
 
 - 已完成 Git 仓库初始化。
-- 产品形态、技术栈和标注格式将在需求确认后确定。
+- 已确定以 CVAT Community 为底座，采用 Windows 本地 Docker Compose 单用户部署。
+- MVP 产品需求已冻结，详见 [REQUIREMENTS.md](REQUIREMENTS.md)。
+- 尚未引入 CVAT 源码或开始功能开发。
 
 ## 基本原则
 

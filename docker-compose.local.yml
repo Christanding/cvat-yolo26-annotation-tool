@@ -1,0 +1,148 @@
+# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) CVAT.ai Corporation
+# SPDX-License-Identifier: MIT
+
+x-cvat-state-volumes: &cvat-state-volumes
+  - type: bind
+    source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/data"
+    target: /home/django/data
+  - type: bind
+    source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/keys"
+    target: /home/django/keys
+  - type: bind
+    source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/logs"
+    target: /home/django/logs
+
+x-cvat-state-and-share-volumes: &cvat-state-and-share-volumes
+  - type: bind
+    source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/data"
+    target: /home/django/data
+  - type: bind
+    source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/keys"
+    target: /home/django/keys
+  - type: bind
+    source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/logs"
+    target: /home/django/logs
+  - type: bind
+    source: "${CVAT_WORKSPACE_ROOT:?set CVAT_WORKSPACE_ROOT}"
+    target: /home/django/share
+    read_only: true
+    bind:
+      create_host_path: false
+  - type: tmpfs
+    target: /home/django/share/.cvat-local
+
+x-cvat-core-dependencies: &cvat-core-dependencies
+  cvat_redis_inmem:
+    condition: service_started
+  cvat_redis_ondisk:
+    condition: service_started
+  cvat_db:
+    condition: service_started
+
+services:
+  cvat_db:
+    volumes:
+      - type: bind
+        source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/postgres"
+        target: /var/lib/postgresql/data
+
+  cvat_redis_inmem:
+    volumes:
+      - type: bind
+        source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/redis"
+        target: /data
+
+  cvat_redis_ondisk:
+    volumes:
+      - type: bind
+        source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/kvrocks"
+        target: /var/lib/kvrocks
+
+  cvat_server:
+    depends_on: !override
+      <<: *cvat-core-dependencies
+      cvat_opa:
+        condition: service_started
+    environment:
+      CVAT_ANALYTICS: '0'
+      DJANGO_LOG_SERVER_HOST: ''
+    volumes: *cvat-state-and-share-volumes
+
+  cvat_worker_utils:
+    depends_on: !override
+      <<: *cvat-core-dependencies
+    environment:
+      DJANGO_LOG_SERVER_HOST: ''
+    volumes: *cvat-state-volumes
+
+  cvat_worker_import:
+    depends_on: !override
+      <<: *cvat-core-dependencies
+    environment:
+      DJANGO_LOG_SERVER_HOST: ''
+    volumes: *cvat-state-and-share-volumes
+
+  cvat_worker_export:
+    depends_on: !override
+      <<: *cvat-core-dependencies
+    environment:
+      DJANGO_LOG_SERVER_HOST: ''
+    volumes: *cvat-state-and-share-volumes
+
+  cvat_worker_annotation:
+    depends_on: !override
+      <<: *cvat-core-dependencies
+    environment:
+      DJANGO_LOG_SERVER_HOST: ''
+    volumes: *cvat-state-and-share-volumes
+
+  cvat_worker_webhooks:
+    profiles:
+      - upstream-extra
+    depends_on: !override
+      <<: *cvat-core-dependencies
+    environment:
+      DJANGO_LOG_SERVER_HOST: ''
+    volumes: *cvat-state-volumes
+
+  cvat_worker_quality_reports:
+    profiles:
+      - upstream-extra
+    depends_on: !override
+      <<: *cvat-core-dependencies
+    environment:
+      DJANGO_LOG_SERVER_HOST: ''
+    volumes: *cvat-state-volumes
+
+  cvat_worker_chunks:
+    depends_on: !override
+      <<: *cvat-core-dependencies
+    environment:
+      DJANGO_LOG_SERVER_HOST: ''
+    volumes: *cvat-state-and-share-volumes
+
+  cvat_worker_consensus:
+    profiles:
+      - upstream-extra
+    depends_on: !override
+      <<: *cvat-core-dependencies
+    environment:
+      DJANGO_LOG_SERVER_HOST: ''
+    volumes: *cvat-state-volumes
+
+  cvat_clickhouse:
+    profiles:
+      - upstream-analytics
+    volumes:
+      - type: bind
+        source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/clickhouse"
+        target: /var/lib/clickhouse
+
+  cvat_vector:
+    profiles:
+      - upstream-analytics
+
+  cvat_grafana:
+    profiles:
+      - upstream-analytics

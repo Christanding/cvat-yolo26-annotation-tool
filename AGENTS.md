@@ -45,3 +45,13 @@ MVP 产品需求已冻结并进入实现阶段。正式范围见 `REQUIREMENTS.m
 ## Verification
 
 按 `REQUIREMENTS.md` 的“验收主路径”选择与修改风险匹配的最小验证；必须覆盖真实图片、视频、持久化和导入导出，不能只报告构建或单元测试通过。
+
+## Runbook
+
+- 本地开发配置以根目录 `.env.example` 为模板，实际 `.env` 不提交。
+- 启动命令：`docker compose -f docker-compose.yml -f docker-compose.local.yml up -d`。
+- `CVAT_WORKSPACE_ROOT` 是用户工作根目录，容器只读挂载到 `/home/django/share`。
+- `CVAT_STATE_DIR` 必须指向工作根目录内的 `.cvat-local`，数据库、任务数据、密钥、日志和缓存均绑定到其子目录。
+- `.cvat-local` 在共享目录视图中使用临时挂载遮蔽，不能作为标注源目录出现。
+- `docker-compose.local.yml` 使用 Compose `!override` 关闭默认分析依赖，安装程序必须检查所装 Docker Compose 支持该语法。
+- 默认不启动 `upstream-analytics` 和 `upstream-extra` 配置组；不要在 MVP 安装流程中启用它们。

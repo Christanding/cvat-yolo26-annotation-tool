@@ -55,7 +55,7 @@ export class FileManager extends React.PureComponent<Props, State> {
             },
             cloudStorage: null,
             potentialCloudStorage: '',
-            active: 'local',
+            active: 'share',
         };
     }
 
@@ -108,7 +108,7 @@ export class FileManager extends React.PureComponent<Props, State> {
             this.cloudStorageTabFormRef.current?.resetFields();
         }
         this.setState({
-            active: 'local',
+            active: 'share',
             files: {
                 local: [],
                 share: [],
@@ -126,7 +126,7 @@ export class FileManager extends React.PureComponent<Props, State> {
 
         return {
             key: 'local',
-            label: 'My computer',
+            label: '拖拽上传',
             className: 'cvat-file-manager-local-tab',
             children: (
                 <LocalFiles
@@ -150,11 +150,11 @@ export class FileManager extends React.PureComponent<Props, State> {
     private renderShareSelector(): NonNullable<TabsProps['items']>[0] {
         return {
             key: 'share',
-            label: 'Connected file share',
+            label: '本地工作区',
             className: 'cvat-file-manager-share-tab',
             children: (
                 <RemoteBrowser
-                    resource='share'
+                    resource='workspace'
                     onSelectFiles={this.handleUploadSharedStorageFiles}
                 />
             ),
@@ -230,10 +230,8 @@ export class FileManager extends React.PureComponent<Props, State> {
                     });
                 }}
                 items={[
-                    this.renderLocalSelector(),
                     this.renderShareSelector(),
-                    this.renderRemoteSelector(),
-                    this.renderCloudStorageSelector(),
+                    this.renderLocalSelector(),
                 ]}
             />
         );

@@ -36,13 +36,13 @@ export default function LocalFiles(props: Props): JSX.Element {
                 <p className='ant-upload-drag-icon'>
                     <InboxOutlined />
                 </p>
-                <p className='ant-upload-text'>Click or drag files to this area</p>
+                <p className='ant-upload-text'>点击选择文件，或将文件拖到这里</p>
                 <p className='ant-upload-hint'>{ hint }</p>
             </Upload.Dragger>
             {files.length >= 5 && (
                 <>
                     <br />
-                    <Text className='cvat-text-color'>{`${files.length} files selected`}</Text>
+                    <Text className='cvat-text-color'>{`已选择 ${files.length} 个文件`}</Text>
                 </>
             )}
         </>

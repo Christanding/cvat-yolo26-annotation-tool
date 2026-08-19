@@ -22,8 +22,7 @@ import {
 } from '@ant-design/icons';
 
 import CVATTooltip from 'components/common/cvat-tooltip';
-import { getCore, CloudStorage } from 'cvat-core-wrapper';
-import config from 'config';
+import { CloudStorage } from 'cvat-core-wrapper';
 import { RemoteFileType } from 'reducers';
 import { useIsMounted } from 'utils/hooks';
 
@@ -42,13 +41,11 @@ export type RemoteFile = Pick<Node, 'key' | 'type' | 'mimeType' | 'name'>;
 type RemoteNode = Omit<Node, 'key' | 'children' | 'initialized'>;
 
 interface Props {
-    resource: 'share' | CloudStorage;
+    resource: 'workspace' | CloudStorage;
     manifestPath?: string;
     defaultPrefix?: string;
     onSelectFiles: (checkedKeysValue: RemoteFile[]) => void;
 }
-
-const core = getCore();
 
 const defaultSearchString = '';
 const defaultPath = ['root'];
@@ -79,6 +76,30 @@ function prefixToSearch(prefix?: string): string {
     }
 
     return defaultSearchString;
+}
+
+interface WorkspaceEntry {
+    path: string;
+    kind: 'directory' | 'image' | 'video' | 'archive';
+}
+
+async function getWorkspaceContent(path: string): Promise<RemoteNode[]> {
+    const query = new URLSearchParams();
+    if (path) query.set('path', path);
+
+    const response = await fetch(`/api/local/workspace?${query.toString()}`, {
+        credentials: 'same-origin',
+    });
+    if (!response.ok) {
+        throw new Error(`工作区读取失败（HTTP ${response.status}）`);
+    }
+
+    const entries = await response.json() as WorkspaceEntry[];
+    return entries.map((entry) => ({
+        name: entry.path.split('/').pop() || entry.path,
+        type: entry.kind === 'directory' ? 'DIR' : 'REG',
+        mimeType: entry.kind === 'directory' ? 'DIR' : entry.kind,
+    }));
 }
 
 const updateRoot = (root: Node, prefix?: string): Node => {
@@ -116,7 +137,6 @@ const updateRoot = (root: Node, prefix?: string): Node => {
 };
 
 function RemoteBrowser(props: Props): JSX.Element {
-    const { SHARE_MOUNT_GUIDE_URL } = config;
     const {
         resource, manifestPath, defaultPrefix, onSelectFiles,
     } = props;
@@ -163,7 +183,7 @@ function RemoteBrowser(props: Props): JSX.Element {
             const currentManifest = manifestPathRef.current;
             const isRelevant = (): boolean => (
                 // check if component is still relevant after async request
-                // and resource & share are the same if not, results are not valid anymore
+                // and the resource is still the same, otherwise results are no longer relevant
                 isMounted() &&
                 currentResource === resourceRef.current &&
                 currentManifest === manifestPathRef.current
@@ -171,8 +191,9 @@ function RemoteBrowser(props: Props): JSX.Element {
 
             try {
                 let nodes: Node[] = [];
-                if (resource === 'share') {
-                    const files: RemoteNode[] = await core.server.share(path, searchString);
+                if (resource === 'workspace') {
+                    const workspacePath = currentPath.slice(1).join('/');
+                    const files = await getWorkspaceContent(workspacePath);
                     nodes = convertChildren(files);
                 } else {
                     const response: { next: string | null, content: RemoteNode[] } =
@@ -203,7 +224,7 @@ function RemoteBrowser(props: Props): JSX.Element {
             } catch (error: any) {
                 if (isRelevant()) {
                     notification.error({
-                        message: 'Storage content fetching failed',
+                        message: resource === 'workspace' ? '无法读取本地工作区' : '无法读取存储内容',
                         description: error.toString(),
                     });
                 }
@@ -296,7 +317,7 @@ function RemoteBrowser(props: Props): JSX.Element {
 
     const columns = [
         {
-            title: 'Name',
+            title: resource === 'workspace' ? '名称' : 'Name',
             dataIndex: 'name',
             key: 'name',
             render: (name: string, node: Node) => {
@@ -325,16 +346,12 @@ function RemoteBrowser(props: Props): JSX.Element {
         },
     ];
 
-    if (resource === 'share' && content.initialized && !content.children.length && !content.searchString) {
+    if (resource === 'workspace' && content.initialized && !content.children.length) {
         return (
             <>
                 <Empty />
                 <Paragraph className='cvat-remote-browser-empty'>
-                    Please, be sure you had
-                    <Text strong>
-                        <a target='_blank' rel='noopener noreferrer' href={SHARE_MOUNT_GUIDE_URL}> mounted </a>
-                    </Text>
-                    share before you built CVAT and the shared storage contains files
+                    当前文件夹中没有可用的 JPG、PNG、MP4、MOV 或 ZIP 文件。
                 </Paragraph>
             </>
         );
@@ -353,7 +370,7 @@ function RemoteBrowser(props: Props): JSX.Element {
                                 setCurrentPath(key.split('/'));
                             },
                             key,
-                            title: segment,
+                            title: resource === 'workspace' && idx === 0 ? '工作区' : segment,
                         };
                     })
                 }
@@ -361,25 +378,31 @@ function RemoteBrowser(props: Props): JSX.Element {
 
             <Row className='cvat-remote-browser-search-wrapper' justify='space-between'>
                 <Col span={22}>
-                    <Input
-                        addonBefore={<SearchOutlined />}
-                        suffix={resource !== 'share' && !!resource.prefix && (
-                            <CVATTooltip title={`Default prefix "${resource.prefix}" is used`}>
-                                <InfoCircleOutlined style={{ opacity: 0.5 }} />
-                            </CVATTooltip>
-                        )}
-                        disabled={isFetching}
-                        placeholder='Search by prefix'
-                        value={curSearchString}
-                        onBlur={() => resetDataSource()}
-                        onPressEnter={() => resetDataSource()}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            setCurSearchString(event.target.value);
-                        }}
-                    />
+                    {resource === 'workspace' ? (
+                        <Text type='secondary'>
+                            选择文件或文件夹。创建任务后，请勿移动、改名或删除源文件。
+                        </Text>
+                    ) : (
+                        <Input
+                            addonBefore={<SearchOutlined />}
+                            suffix={!!resource.prefix && (
+                                <CVATTooltip title={`Default prefix "${resource.prefix}" is used`}>
+                                    <InfoCircleOutlined style={{ opacity: 0.5 }} />
+                                </CVATTooltip>
+                            )}
+                            disabled={isFetching}
+                            placeholder='Search by prefix'
+                            value={curSearchString}
+                            onBlur={() => resetDataSource()}
+                            onPressEnter={() => resetDataSource()}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                setCurSearchString(event.target.value);
+                            }}
+                        />
+                    )}
                 </Col>
                 <Col>
-                    <CVATTooltip title='Refresh'>
+                    <CVATTooltip title={resource === 'workspace' ? '刷新目录' : 'Refresh'}>
                         <Button
                             disabled={isFetching}
                             onClick={() => {

@@ -100,7 +100,7 @@ const defaultState: State = {
         remote: [],
         cloudStorage: [],
     },
-    activeFileManagerTab: 'local',
+    activeFileManagerTab: 'share',
     cloudStorageId: null,
     multiTasks: [],
     uploadFileErrorMessage: '',
@@ -114,8 +114,8 @@ const UploadFileErrorMessages = {
 };
 
 const UploadFileHints = {
-    one: 'You can upload an archive with images, a video, or multiple images',
-    multi: 'You can upload one or more videos',
+    one: '支持多个 JPG、PNG 文件，或一个 ZIP 压缩包',
+    multi: '支持一个或多个视频文件',
 };
 
 function receiveExtensions(files: RemoteFile[]): string[] {

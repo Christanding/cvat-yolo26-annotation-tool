@@ -214,6 +214,17 @@ function HeaderComponent(props: Props): JSX.Element {
                 >
                     新建任务
                 </Button>
+                <Button
+                    className={getButtonClassName('video-extraction', '/videos/extract')}
+                    type='link'
+                    href='/videos/extract'
+                    onClick={(event: React.MouseEvent): void => {
+                        event.preventDefault();
+                        history.push('/videos/extract');
+                    }}
+                >
+                    视频抽帧
+                </Button>
             </div>
             <div className='cvat-right-header'>
                 <Dropdown

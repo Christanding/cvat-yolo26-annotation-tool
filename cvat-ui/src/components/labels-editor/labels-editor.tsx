@@ -29,6 +29,8 @@ interface LabelsEditorProps {
     enableSkeletonCreator?: boolean;
     enableFromModelCreator?: boolean;
     showLabelType?: boolean;
+    enableRawEditor?: boolean;
+    showAttributes?: boolean;
 }
 
 interface LabelsEditorState {
@@ -277,6 +279,8 @@ export default class LabelsEditor extends React.PureComponent<LabelsEditorProps,
             enableSkeletonCreator = true,
             enableFromModelCreator = true,
             showLabelType = true,
+            enableRawEditor = true,
+            showAttributes = true,
         } = this.props;
         const {
             savedLabels, unsavedLabels, constructorMode, labelForUpdate, creatorType, submitting,
@@ -315,6 +319,7 @@ export default class LabelsEditor extends React.PureComponent<LabelsEditorProps,
                     onUpdate={this.handleUpdate}
                     onCancel={this.handlerCancel}
                     showLabelType={showLabelType}
+                    showAttributes={showAttributes}
                 />
             );
         } else if (constructorMode === ConstructorMode.CREATE) {
@@ -326,11 +331,16 @@ export default class LabelsEditor extends React.PureComponent<LabelsEditorProps,
                     onCreate={this.handleCreate}
                     onCancel={this.handlerCancel}
                     showLabelType={showLabelType}
+                    showAttributes={showAttributes}
                 />
             );
         }
 
-        const content = (
+        if (!enableRawEditor) {
+            return configuratorContent;
+        }
+
+        return (
             <Tabs
                 defaultActiveKey='configurator'
                 type='card'
@@ -364,6 +374,5 @@ export default class LabelsEditor extends React.PureComponent<LabelsEditorProps,
             />
         );
 
-        return content;
     }
 }

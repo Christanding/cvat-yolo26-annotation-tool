@@ -58,14 +58,14 @@ export default function TaskActionsItems(menuItemsData: MenuItemsData, taskMenuP
     menuItems.push([{
         key: 'load_task_anno',
         onClick: onUploadAnnotations,
-        label: withCount('Upload annotations', 'load_task_anno'),
+        label: withCount('导入标注', 'load_task_anno'),
         disabled: isDisabled('load_task_anno'),
     }, 0]);
 
     menuItems.push([{
         key: 'export_task_dataset',
         onClick: onExportDataset,
-        label: withCount('Export task dataset', 'export_task_dataset'),
+        label: withCount('导出标注包', 'export_task_dataset'),
         disabled: isDisabled('export_task_dataset'),
     }, 10]);
 
@@ -153,7 +153,7 @@ export default function TaskActionsItems(menuItemsData: MenuItemsData, taskMenuP
     menuItems.push([{
         key: 'delete_task',
         onClick: onDeleteTask,
-        label: withCount('Delete', 'delete_task'),
+        label: withCount('删除任务', 'delete_task'),
         disabled: isDisabled('delete_task'),
     }, 110]);
 
@@ -164,6 +164,9 @@ export default function TaskActionsItems(menuItemsData: MenuItemsData, taskMenuP
         }),
     );
 
-    const sortedMenuItems = [...menuItems].sort((menuItem1, menuItem2) => menuItem1[1] - menuItem2[1]);
+    const visibleKeys = new Set(['load_task_anno', 'export_task_dataset', 'delete_task']);
+    const sortedMenuItems = [...menuItems]
+        .filter(([item]) => item && 'key' in item && visibleKeys.has(String(item.key)))
+        .sort((menuItem1, menuItem2) => menuItem1[1] - menuItem2[1]);
     return sortedMenuItems.map((menuItem) => menuItem[0]);
 }

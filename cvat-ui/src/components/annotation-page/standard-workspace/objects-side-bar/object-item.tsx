@@ -94,8 +94,8 @@ function ObjectItemComponent(props: Props): JSX.Element {
         jobInstance,
     } = props;
 
-    const type =
-        objectType === ObjectType.TAG ?
+    const type = objectType === ObjectType.SHAPE && shapeType === ShapeType.RECTANGLE ?
+        '矩形框' : objectType === ObjectType.TAG ?
             ObjectType.TAG.toUpperCase() :
             `${shapeType.toUpperCase()} ${objectType.toUpperCase()}`;
 

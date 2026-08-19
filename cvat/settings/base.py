@@ -336,6 +336,7 @@ class CVAT_QUEUES(Enum):
     CLEANING = "cleaning"
     CHUNKS = "chunks"
     CONSENSUS = "consensus"
+    LOCAL_MEDIA = "local_media"
 
 
 redis_inmem_host = os.getenv("CVAT_REDIS_INMEM_HOST", "localhost")
@@ -405,6 +406,10 @@ RQ_QUEUES = {
         "DEFAULT_TIMEOUT": "1h",
         # custom fields
         "PARSED_JOB_ID_CLASS": "cvat.apps.consensus.rq.ConsensusRequestId",
+    },
+    CVAT_QUEUES.LOCAL_MEDIA.value: {
+        **REDIS_INMEM_SETTINGS,
+        "DEFAULT_TIMEOUT": "4h",
     },
 }
 

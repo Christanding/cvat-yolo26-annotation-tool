@@ -109,7 +109,7 @@ const defaultState: State = {
 };
 
 const UploadFileErrorMessages = {
-    one: 'Wrong list of files. You can upload an archive with images, a video, a pdf file or multiple images. ',
+    one: '文件格式不受支持。请选择 JPG、PNG 图片或包含图片的 ZIP 压缩包。',
     multi: 'Wrong list of files. You can upload one or more videos. ',
 };
 
@@ -445,8 +445,8 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
 
         if (!this.validateFiles()) {
             notification.error({
-                message: 'Could not create a task',
-                description: 'A task must contain at least one file',
+                message: '无法创建任务',
+                description: '请至少选择一个图片文件或文件夹',
                 className: 'cvat-notification-create-task-fail',
             });
             reject();
@@ -521,7 +521,7 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
             }).then(resolve)
             .catch((error: Error | ValidateErrorEntity): void => {
                 notification.error({
-                    message: 'Could not create a task',
+                    message: '无法创建任务',
                     description: formFieldsError(error).map((text: string): JSX.Element => <div>{text}</div>),
                     className: 'cvat-notification-create-task-fail',
                 });
@@ -849,9 +849,14 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
 
         return (
             <Col span={24}>
-                <Text className='cvat-text-color'>Labels</Text>
+                <Text className='cvat-text-color'>类别</Text>
                 <LabelsEditor
                     labels={labels}
+                    enableSkeletonCreator={false}
+                    enableFromModelCreator={false}
+                    enableRawEditor={false}
+                    showLabelType={false}
+                    showAttributes={false}
                     onSubmit={(newLabels): void => {
                         this.setState({
                             labels: newLabels,
@@ -870,7 +875,7 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
             <>
                 <Col span={24}>
                     <Text type='danger'>* </Text>
-                    <Text className='cvat-text-color'>Select files</Text>
+                    <Text className='cvat-text-color'>选择图片</Text>
                     <FileManagerComponent
                         localFilesHint={many ? UploadFileHints.multi : UploadFileHints.one}
                         onChangeActiveKey={this.changeFileManagerTab}
@@ -988,17 +993,7 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
                         onClick={this.handleSubmitAndOpen}
                         disabled={!!uploadFileErrorMessage}
                     >
-                        Submit & Open
-                    </Button>
-                </Col>
-                <Col>
-                    <Button
-                        className='cvat-submit-continue-task-button'
-                        type='primary'
-                        onClick={this.handleSubmitAndContinue}
-                        disabled={!!uploadFileErrorMessage}
-                    >
-                        Submit & Continue
+                        创建并打开
                     </Button>
                 </Col>
             </Row>
@@ -1054,16 +1049,12 @@ class CreateTaskContent extends React.PureComponent<Props & RouteComponentProps,
         return (
             <Row justify='start' align='middle' className='cvat-create-task-content'>
                 <Col span={24}>
-                    <Text className='cvat-title'>Basic configuration</Text>
+                    <Text className='cvat-title'>基本信息</Text>
                 </Col>
 
                 {this.renderBasicBlock()}
-                {this.renderProjectBlock()}
-                {this.renderSubsetBlock()}
                 {this.renderLabelsBlock()}
                 {this.renderFilesBlock()}
-                {this.renderAdvancedBlock()}
-                {this.renderQualityBlock()}
 
                 <Col span={24} className='cvat-create-task-content-footer'>
                     {many ? this.renderFooterMultiTasks() : this.renderFooterSingleTask() }

@@ -35,6 +35,24 @@ x-cvat-state-and-share-volumes: &cvat-state-and-share-volumes
   - type: tmpfs
     target: /home/django/share/.cvat-local
 
+x-cvat-state-and-writable-share-volumes: &cvat-state-and-writable-share-volumes
+  - type: bind
+    source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/data"
+    target: /home/django/data
+  - type: bind
+    source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/keys"
+    target: /home/django/keys
+  - type: bind
+    source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/logs"
+    target: /home/django/logs
+  - type: bind
+    source: "${CVAT_WORKSPACE_ROOT:?set CVAT_WORKSPACE_ROOT}"
+    target: /home/django/share
+    bind:
+      create_host_path: false
+  - type: tmpfs
+    target: /home/django/share/.cvat-local
+
 x-cvat-core-dependencies: &cvat-core-dependencies
   cvat_redis_inmem:
     condition: service_started
@@ -56,12 +74,6 @@ services:
         source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/redis"
         target: /data
 
-  cvat_redis_ondisk:
-    volumes:
-      - type: bind
-        source: "${CVAT_STATE_DIR:?set CVAT_STATE_DIR}/kvrocks"
-        target: /var/lib/kvrocks
-
   cvat_server:
     image: *local-server-image
     build:
@@ -73,6 +85,7 @@ services:
     environment:
       CVAT_ANALYTICS: '0'
       CVAT_LOCAL_WORKSPACE_ROOT: /home/django/share
+      CVAT_NUCLIO_DEFAULT_TIMEOUT: '1'
       DJANGO_LOG_SERVER_HOST: ''
     volumes: *cvat-state-and-share-volumes
 
@@ -81,8 +94,10 @@ services:
     depends_on: !override
       <<: *cvat-core-dependencies
     environment:
+      CVAT_LOCAL_WORKSPACE_ROOT: /home/django/share
       DJANGO_LOG_SERVER_HOST: ''
-    volumes: *cvat-state-volumes
+    command: run worker notifications cleaning local_media
+    volumes: *cvat-state-and-writable-share-volumes
 
   cvat_worker_import:
     image: *local-server-image

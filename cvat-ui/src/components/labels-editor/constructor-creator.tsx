@@ -16,6 +16,7 @@ interface Props {
     onCreate: (label: LabelOptColor) => void;
     onCancel: () => void;
     showLabelType?: boolean;
+    showAttributes?: boolean;
 }
 
 function compareProps(prevProps: Props, nextProps: Props): boolean {
@@ -24,6 +25,7 @@ function compareProps(prevProps: Props, nextProps: Props): boolean {
         prevProps.onCancel === nextProps.onCancel &&
         prevProps.creatorType === nextProps.creatorType &&
         prevProps.showLabelType === nextProps.showLabelType &&
+        prevProps.showAttributes === nextProps.showAttributes &&
         prevProps.labelNames.length === nextProps.labelNames.length &&
         prevProps.labelNames.every((value: string, index: number) => nextProps.labelNames[index] === value)
     );
@@ -31,7 +33,7 @@ function compareProps(prevProps: Props, nextProps: Props): boolean {
 
 function ConstructorCreator(props: Props): JSX.Element {
     const {
-        onCreate, onCancel, labelNames, creatorType, showLabelType,
+        onCreate, onCancel, labelNames, creatorType, showLabelType, showAttributes,
     } = props;
     const skeletonConfiguratorRef = useRef<SkeletonConfigurator>(null);
 
@@ -67,6 +69,7 @@ function ConstructorCreator(props: Props): JSX.Element {
                         resetSkeleton={creatorType === 'skeleton' ? resetSkeleton : undefined}
                         onCancel={onCancel}
                         showLabelType={showLabelType}
+                        showAttributes={showAttributes}
                     />
                     {creatorType === 'skeleton' && (
                         <SkeletonConfigurator label={null} ref={skeletonConfiguratorRef} />

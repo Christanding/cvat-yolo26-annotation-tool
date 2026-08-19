@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 import './styles.scss';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { shallowEqual } from 'utils/redux';
@@ -12,21 +12,15 @@ import { Row, Col } from 'antd/lib/grid';
 import Spin from 'antd/lib/spin';
 import notification from 'antd/lib/notification';
 
-import { getInferenceStatusAsync } from 'actions/models-actions';
-import { updateJobAsync, jobsActions } from 'actions/jobs-actions';
-import {
-    getCore, Task, Job, FramesMetaData, MediaType,
-} from 'cvat-core-wrapper';
+import { jobsActions } from 'actions/jobs-actions';
+import { getCore, Task } from 'cvat-core-wrapper';
 import { TaskNotFoundComponent } from 'components/common/not-found';
 import JobListComponent from 'components/task-page/job-list';
-import ModelRunnerModal from 'components/model-runner-modal/model-runner-dialog';
 import CVATLoadingSpinner from 'components/common/loading-spinner';
-import MoveTaskModal from 'components/move-task-modal/move-task-modal';
 import { CombinedState } from 'reducers';
-import { updateTaskAsync, updateTaskMetadataAsync } from 'actions/tasks-actions';
+import { updateTaskAsync } from 'actions/tasks-actions';
 import TopBarComponent from './top-bar';
 import DetailsComponent from './details';
-import { getCloudStorageById } from './cloud-storage-editor';
 
 const core = getCore();
 
@@ -35,10 +29,6 @@ function TaskPageComponent(): JSX.Element {
     const id = +useParams<{ id: string }>().id;
     const dispatch = useDispatch();
     const [taskInstance, setTaskInstance] = useState<Task | null>(null);
-    const [taskMeta, setTaskMeta] = useState<FramesMetaData | null>(null);
-    const [
-        cloudStorageInstance, setCloudStorageInstance,
-    ] = useState<CombinedState['cloudStorages']['current'][number] | null>(null);
     const [fetchingTask, setFetchingTask] = useState(true);
 
     const {
@@ -63,18 +53,10 @@ function TaskPageComponent(): JSX.Element {
                 dispatch(jobsActions.getJobsSuccess(
                     Object.assign([...task.jobs], { count: task.jobs.length })),
                 );
-
-                const meta = await task.meta.get();
-                setTaskMeta(meta);
-
-                if (meta.cloudStorageId) {
-                    const cloudStorage = await getCloudStorageById(meta.cloudStorageId);
-                    setCloudStorageInstance(cloudStorage);
-                }
             }
         } catch (error: any) {
             notification.error({
-                message: 'Could not receive the requested task from the server',
+                message: '无法读取任务',
                 description: error.toString(),
             });
         }
@@ -84,7 +66,6 @@ function TaskPageComponent(): JSX.Element {
         receiveTask().finally(() => {
             setFetchingTask(false);
         });
-        dispatch(getInferenceStatusAsync());
     }, []);
 
     useEffect(() => {
@@ -92,13 +73,6 @@ function TaskPageComponent(): JSX.Element {
             history.push('/tasks');
         }
     }, [deletes]);
-
-    const isAudioTask = taskInstance && taskInstance.mediaType === MediaType.AUDIO;
-    const labelsEditorProps = useMemo(() => (isAudioTask ? {
-        enableSkeletonCreator: false,
-        enableFromModelCreator: false,
-        showLabelType: false,
-    } : undefined), [isAudioTask]);
 
     if (fetchingTask) {
         return <Spin size='large' className='cvat-spinner' />;
@@ -116,22 +90,6 @@ function TaskPageComponent(): JSX.Element {
         return promise;
     };
 
-    const onUpdateTaskMeta = (meta: FramesMetaData): Promise<void> => (
-        dispatch(updateTaskMetadataAsync(taskInstance, meta)).then((updatedMeta: FramesMetaData) => {
-            setTaskMeta(updatedMeta);
-            if (updatedMeta && updatedMeta.cloudStorageId) {
-                return getCloudStorageById(updatedMeta.cloudStorageId);
-            }
-            return null;
-        }).then((_cloudStorage) => {
-            setCloudStorageInstance(_cloudStorage);
-        })
-    );
-
-    const onJobUpdate = (job: Job, data: Parameters<Job['save']>[0]): void => {
-        dispatch(updateJobAsync(job, data));
-    };
-
     return (
         <div className='cvat-task-page'>
             { isTaskUpdating ? <CVATLoadingSpinner size='large' /> : null }
@@ -145,16 +103,10 @@ function TaskPageComponent(): JSX.Element {
                     <DetailsComponent
                         task={taskInstance}
                         onUpdateTask={onUpdateTask}
-                        taskMeta={taskMeta}
-                        cloudStorageInstance={cloudStorageInstance}
-                        onUpdateTaskMeta={onUpdateTaskMeta}
-                        labelsEditorProps={labelsEditorProps}
                     />
-                    <JobListComponent task={taskInstance} onJobUpdate={onJobUpdate} />
+                    <JobListComponent task={taskInstance} />
                 </Col>
             </Row>
-            <ModelRunnerModal />
-            <MoveTaskModal onUpdateTask={onUpdateTask} />
         </div>
     );
 }

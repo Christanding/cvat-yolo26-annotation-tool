@@ -4,8 +4,6 @@
 
 import './styles.scss';
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { CombinedState } from 'reducers';
 import Layout from 'antd/lib/layout';
 import { Col, Row } from 'antd/lib/grid';
 import Title from 'antd/lib/typography/Title';
@@ -52,8 +50,6 @@ export const formSizes: FormSizes = {
 function SignInLayout(props: SignInLayoutComponentProps): JSX.Element {
     const { children } = props;
     const { Content, Header } = Layout;
-    const subtitle = useSelector((state: CombinedState) => state.about.server.subtitle);
-
     const titleSizes = {
         xs: { span: 0 },
         sm: { span: 0 },
@@ -84,7 +80,7 @@ function SignInLayout(props: SignInLayoutComponentProps): JSX.Element {
                 <Content>
                     <Row justify='center' align='middle' style={{ height: '100%' }}>
                         <Col {...titleSizes} className='cvat-signing-title'>
-                            <Title>{subtitle}</Title>
+                            <Title>数据标注平台</Title>
                         </Col>
                         {children}
                     </Row>

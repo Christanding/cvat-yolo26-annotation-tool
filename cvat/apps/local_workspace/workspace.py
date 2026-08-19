@@ -38,7 +38,7 @@ def _resolve_directory(root: Path, relative_path: str) -> tuple[Path, Path]:
 
     requested_path = Path(relative_path)
     if requested_path.is_absolute() or any(
-        _is_internal_name(part) for part in requested_path.parts
+        part == ".." or _is_internal_name(part) for part in requested_path.parts
     ):
         raise WorkspacePathError("workspace paths must be relative")
 
@@ -52,6 +52,36 @@ def _resolve_directory(root: Path, relative_path: str) -> tuple[Path, Path]:
         raise WorkspacePathError("workspace path is not a directory")
 
     return resolved_root, directory
+
+
+def resolve_workspace_file(
+    root: Path,
+    relative_path: str,
+    *,
+    allowed_extensions: set[str],
+) -> Path:
+    try:
+        resolved_root = root.resolve(strict=True)
+    except OSError as error:
+        raise WorkspacePathError("workspace root is unavailable") from error
+
+    requested_path = Path(relative_path)
+    if (
+        requested_path.is_absolute()
+        or not requested_path.parts
+        or any(part == ".." or _is_internal_name(part) for part in requested_path.parts)
+    ):
+        raise WorkspacePathError("workspace paths must be relative")
+
+    try:
+        file_path = (resolved_root / requested_path).resolve(strict=True)
+        file_path.relative_to(resolved_root)
+    except (OSError, ValueError) as error:
+        raise WorkspacePathError("workspace path is invalid") from error
+
+    if not file_path.is_file() or file_path.suffix.lower() not in allowed_extensions:
+        raise WorkspacePathError("workspace file is unsupported")
+    return file_path
 
 
 def _iter_candidates(directory: Path, recursive: bool) -> Iterator[Path]:

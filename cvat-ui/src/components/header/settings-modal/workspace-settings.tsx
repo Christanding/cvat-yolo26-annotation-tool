@@ -8,12 +8,8 @@ import { Row, Col } from 'antd/lib/grid';
 import Checkbox, { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import InputNumber from 'antd/lib/input-number';
 import Text from 'antd/lib/typography/Text';
-import Slider from 'antd/lib/slider';
 import Select from 'antd/lib/select';
 
-import {
-    MAX_ACCURACY,
-} from 'components/annotation-page/standard-workspace/controls-side-bar/approximation-accuracy';
 import { clamp } from 'utils/math';
 
 interface Props {
@@ -50,29 +46,21 @@ function WorkspaceSettingsComponent(props: Props): JSX.Element {
         autoSave,
         autoSaveInterval,
         focusedObjectPadding,
-        showAllInterpolationTracks,
         showObjectsTextAlways,
         adaptiveZoom,
-        intelligentPolygonCrop,
-        defaultApproxPolyAccuracy,
         textFontSize,
         controlPointsSize,
         textPosition,
         textContent,
-        showTagsOnFrame,
         onSwitchAutoSave,
         onChangeAutoSaveInterval,
         onChangeFocusedObjectPadding,
-        onSwitchShowingInterpolatedTracks,
         onSwitchShowingObjectsTextAlways,
         onSwitchAdaptiveZoom,
-        onSwitchIntelligentPolygonCrop,
-        onChangeDefaultApproxPolyAccuracy,
         onChangeTextFontSize,
         onChangeControlPointsSize,
         onChangeTextPosition,
         onChangeTextContent,
-        onSwitchShowingTagsOnFrame,
     } = props;
 
     const minAutoSaveInterval = 1;
@@ -93,11 +81,11 @@ function WorkspaceSettingsComponent(props: Props): JSX.Element {
                             onSwitchAutoSave(event.target.checked);
                         }}
                     >
-                        Enable auto save
+                        自动保存
                     </Checkbox>
                 </Col>
                 <Col className='cvat-workspace-settings-auto-save-interval'>
-                    <Text type='secondary'> Auto save every </Text>
+                    <Text type='secondary'> 每 </Text>
                     <InputNumber
                         size='small'
                         min={minAutoSaveInterval}
@@ -112,25 +100,7 @@ function WorkspaceSettingsComponent(props: Props): JSX.Element {
                             }
                         }}
                     />
-                    <Text type='secondary'> minutes </Text>
-                </Col>
-            </Row>
-            <Row className='cvat-player-setting'>
-                <Col span={12} className='cvat-workspace-settings-show-interpolated'>
-                    <Row>
-                        <Checkbox
-                            className='cvat-text-color'
-                            checked={showAllInterpolationTracks}
-                            onChange={(event: CheckboxChangeEvent): void => {
-                                onSwitchShowingInterpolatedTracks(event.target.checked);
-                            }}
-                        >
-                            Show all interpolation tracks
-                        </Checkbox>
-                    </Row>
-                    <Row>
-                        <Text type='secondary'> Show hidden interpolated objects in the side panel</Text>
-                    </Row>
+                    <Text type='secondary'> 分钟自动保存一次 </Text>
                 </Col>
             </Row>
             <Row className='cvat-workspace-settings-show-text-always cvat-player-setting'>
@@ -142,18 +112,18 @@ function WorkspaceSettingsComponent(props: Props): JSX.Element {
                             onSwitchShowingObjectsTextAlways(event.target.checked);
                         }}
                     >
-                        Always show object details
+                        始终显示标注信息
                     </Checkbox>
                 </Col>
                 <Col span={24}>
                     <Text type='secondary'>
-                        Show text for an object on the canvas not only when the object is activated
+                        未选中标注框时也在画布中显示其信息
                     </Text>
                 </Col>
             </Row>
             <Row className='cvat-workspace-settings-text-settings cvat-player-setting'>
                 <Col span={24}>
-                    <Text>Content of a text</Text>
+                    <Text>标注框显示内容</Text>
                 </Col>
                 <Col span={16}>
                     <Select
@@ -163,21 +133,21 @@ function WorkspaceSettingsComponent(props: Props): JSX.Element {
                         onChange={onChangeTextContent}
                     >
                         <Select.Option value='id'>ID</Select.Option>
-                        <Select.Option value='label'>Label</Select.Option>
-                        <Select.Option value='attributes'>Attributes</Select.Option>
-                        <Select.Option value='source'>Source</Select.Option>
-                        <Select.Option value='descriptions'>Descriptions</Select.Option>
-                        <Select.Option value='dimensions'>Dimensions</Select.Option>
-                        <Select.Option value='layer'>Layer</Select.Option>
+                        <Select.Option value='label'>类别</Select.Option>
+                        <Select.Option value='attributes'>属性</Select.Option>
+                        <Select.Option value='source'>来源</Select.Option>
+                        <Select.Option value='descriptions'>说明</Select.Option>
+                        <Select.Option value='dimensions'>尺寸</Select.Option>
+                        <Select.Option value='layer'>图层</Select.Option>
                     </Select>
                 </Col>
             </Row>
             <Row className='cvat-workspace-settings-text-settings cvat-player-setting'>
                 <Col span={12}>
-                    <Text>Position of a text</Text>
+                    <Text>文字位置</Text>
                 </Col>
                 <Col span={12}>
-                    <Text>Font size of a text</Text>
+                    <Text>文字大小</Text>
                 </Col>
                 <Col span={12}>
                     <Select
@@ -185,8 +155,8 @@ function WorkspaceSettingsComponent(props: Props): JSX.Element {
                         value={textPosition}
                         onChange={onChangeTextPosition}
                     >
-                        <Select.Option value='auto'>Auto</Select.Option>
-                        <Select.Option value='center'>Center</Select.Option>
+                        <Select.Option value='auto'>自动</Select.Option>
+                        <Select.Option value='center'>居中</Select.Option>
                     </Select>
                 </Col>
                 <Col span={12}>
@@ -208,50 +178,18 @@ function WorkspaceSettingsComponent(props: Props): JSX.Element {
                             onSwitchAdaptiveZoom(event.target.checked);
                         }}
                     >
-                        Adaptive zoom algorithm
+                        自适应缩放
                     </Checkbox>
                 </Col>
                 <Col span={24}>
                     <Text type='secondary'>
-                        Enable smoother version of zooming, compatible with a trackpad and pinch gestures
+                        优化触控板和双指缩放的操作体验
                     </Text>
-                </Col>
-            </Row>
-            <Row className='cvat-workspace-settings-intelligent-polygon-cropping cvat-player-setting'>
-                <Col span={24}>
-                    <Checkbox
-                        className='cvat-text-color'
-                        checked={intelligentPolygonCrop}
-                        onChange={(event: CheckboxChangeEvent): void => {
-                            onSwitchIntelligentPolygonCrop(event.target.checked);
-                        }}
-                    >
-                        Intelligent polygon cropping
-                    </Checkbox>
-                </Col>
-                <Col span={24}>
-                    <Text type='secondary'>Try to crop polygons automatically when editing</Text>
-                </Col>
-            </Row>
-            <Row className='cvat-workspace-settings-show-frame-tags cvat-player-setting'>
-                <Col span={24}>
-                    <Checkbox
-                        className='cvat-text-color'
-                        checked={showTagsOnFrame}
-                        onChange={(event: CheckboxChangeEvent): void => {
-                            onSwitchShowingTagsOnFrame(event.target.checked);
-                        }}
-                    >
-                        Show tags on frame
-                    </Checkbox>
-                </Col>
-                <Col span={24}>
-                    <Text type='secondary'>Show frame tags in the corner of the workspace</Text>
                 </Col>
             </Row>
             <Row className='cvat-workspace-settings-focused-object-padding cvat-player-setting'>
                 <Col>
-                    <Text className='cvat-text-color'> Focused object padding </Text>
+                    <Text className='cvat-text-color'> 选中标注框的边距 </Text>
                     <InputNumber
                         min={minFocusedObjectPadding}
                         max={maxFocusedObjectPadding}
@@ -266,12 +204,12 @@ function WorkspaceSettingsComponent(props: Props): JSX.Element {
                     />
                 </Col>
                 <Col span={24}>
-                    <Text type='secondary'>Adds extra space in pixels around an object when it gets fitted</Text>
+                    <Text type='secondary'>适应窗口时在标注框四周保留的像素边距</Text>
                 </Col>
             </Row>
             <Row className='cvat-workspace-settings-control-points-size cvat-player-setting'>
                 <Col>
-                    <Text className='cvat-text-color'> Control points size </Text>
+                    <Text className='cvat-text-color'> 控制点大小 </Text>
                     <InputNumber
                         min={minControlPointsSize}
                         max={maxControlPointsSize}
@@ -284,27 +222,6 @@ function WorkspaceSettingsComponent(props: Props): JSX.Element {
                             }
                         }}
                     />
-                </Col>
-            </Row>
-            <Row className='cvat-workspace-settings-approx-poly-threshold cvat-player-setting'>
-                <Col>
-                    <Text className='cvat-text-color'>Default polygon simplification threshold</Text>
-                </Col>
-                <Col span={7} offset={1}>
-                    <Slider
-                        min={0}
-                        max={MAX_ACCURACY}
-                        step={1}
-                        value={defaultApproxPolyAccuracy}
-                        dots
-                        onChange={onChangeDefaultApproxPolyAccuracy}
-                    />
-                </Col>
-                <Col>
-                    <Text type='secondary'>
-                        Higher values preserve more polygon detail. Used for serverless interactors,
-                        OpenCV scissors, and polygon simplification
-                    </Text>
                 </Col>
             </Row>
         </div>

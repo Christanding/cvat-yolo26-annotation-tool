@@ -29,7 +29,7 @@ const defaultState: SettingsState = {
         },
     },
     workspace: {
-        autoSave: false,
+        autoSave: true,
         autoSaveInterval: 15 * 60 * 1000,
         focusedObjectPadding: 50,
         automaticBordering: false,

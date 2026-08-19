@@ -128,7 +128,6 @@ function TasksPageComponent(props: Readonly<Props>): JSX.Element {
                     );
                 }}
                 query={updatedQuery}
-                importing={importing}
                 selectedCount={selectedCount}
                 onSelectAll={onSelectAll}
             />

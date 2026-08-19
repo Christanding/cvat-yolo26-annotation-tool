@@ -48,7 +48,7 @@ function SaveAnnotationsButton() {
     return (
         <>
             <GlobalHotKeys keyMap={subKeyMap(componentShortcuts, keyMap)} handlers={handlers} />
-            <CVATTooltip overlay={`Save current changes ${normKeyMap.SAVE_JOB}`}>
+            <CVATTooltip overlay={`保存当前标注 ${normKeyMap.SAVE_JOB}`}>
                 <Button
                     type='link'
                     onClick={isSaving ? undefined : () => dispatch(saveAnnotationsAsync())}
@@ -56,7 +56,7 @@ function SaveAnnotationsButton() {
                         'cvat-annotation-header-save-button cvat-annotation-header-button'}
                 >
                     <Icon component={SaveIcon} />
-                    {isSaving ? 'Saving...' : 'Save'}
+                    {isSaving ? '保存中…' : '保存'}
                 </Button>
             </CVATTooltip>
         </>

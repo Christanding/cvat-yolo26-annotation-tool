@@ -110,14 +110,14 @@ function LeftGroup(props: Props): JSX.Element {
                     closable={false}
                     footer={[]}
                 >
-                    <Text>CVAT is saving your annotations, please wait </Text>
+                    <Text>正在保存标注，请稍候</Text>
                     <LoadingOutlined />
                 </Modal>
             )}
             <Col className='cvat-annotation-header-left-group'>
                 <AnnotationMenuComponent />
                 <SaveAnnotationsButton />
-                <CVATTooltip overlay={`Undo: ${undoAction} ${undoShortcut}`}>
+                <CVATTooltip overlay={`撤销：${undoAction || ''} ${undoShortcut}`}>
                     <Button
                         style={{ pointerEvents: undoAction ? 'initial' : 'none', opacity: undoAction ? 1 : 0.5 }}
                         type='link'
@@ -125,10 +125,10 @@ function LeftGroup(props: Props): JSX.Element {
                         onClick={onUndoClick}
                     >
                         <Icon component={UndoIcon} />
-                        <span>Undo</span>
+                        <span>撤销</span>
                     </Button>
                 </CVATTooltip>
-                <CVATTooltip overlay={`Redo: ${redoAction} ${redoShortcut}`}>
+                <CVATTooltip overlay={`重做：${redoAction || ''} ${redoShortcut}`}>
                     <Button
                         style={{ pointerEvents: redoAction ? 'initial' : 'none', opacity: redoAction ? 1 : 0.5 }}
                         type='link'
@@ -136,14 +136,14 @@ function LeftGroup(props: Props): JSX.Element {
                         onClick={onRedoClick}
                     >
                         <Icon component={RedoIcon} />
-                        Redo
+                        重做
                     </Button>
                 </CVATTooltip>
                 {includesDoneButton ? (
-                    <CVATTooltip overlay={`Press "${drawShortcut}" to finish`}>
+                    <CVATTooltip overlay={`按 ${drawShortcut} 完成绘制`}>
                         <Button type='link' className='cvat-annotation-header-done-button cvat-annotation-header-button' onClick={onFinishDraw}>
                             <CheckCircleOutlined />
-                            Done
+                            完成绘制
                         </Button>
                     </CVATTooltip>
                 ) : null}

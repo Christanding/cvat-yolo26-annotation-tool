@@ -703,8 +703,13 @@ class AnnotationTopBarContainer extends React.PureComponent<Props> {
     }
 
     private changeFrame(frame: number): void {
-        const { onChangeFrame } = this.props;
+        const {
+            onChangeFrame, onSaveAnnotation, saving, jobInstance,
+        } = this.props;
         if (isAbleToChangeFrame(frame)) {
+            if (!saving && jobInstance.annotations.hasUnsavedChanges()) {
+                onSaveAnnotation();
+            }
             onChangeFrame(frame);
         }
     }

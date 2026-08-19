@@ -12,12 +12,11 @@ import Text from 'antd/lib/typography/Text';
 import Modal from 'antd/lib/modal/Modal';
 import Button from 'antd/lib/button';
 import notification from 'antd/lib/notification';
-import { PlayCircleOutlined, LaptopOutlined, BuildOutlined } from '@ant-design/icons';
+import { PlayCircleOutlined, LaptopOutlined } from '@ant-design/icons';
 
 import { restoreSettingsAsync, updateCachedSettings } from 'actions/settings-actions';
 import WorkspaceSettingsContainer from 'containers/header/settings-modal/workspace-settings';
 import PlayerSettingsContainer from 'containers/header/settings-modal/player-settings';
-import ShortcutsSettingsContainer from 'containers/header/settings-modal/shortcuts-settings';
 import { CombinedState } from 'reducers';
 
 interface SettingsModalProps {
@@ -46,7 +45,7 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
             dispatch(restoreSettingsAsync());
         } catch {
             notification.error({
-                message: 'Failed to load settings from local storage',
+                message: '无法从本机加载设置',
                 className: 'cvat-notification-notice-load-settings-fail',
             });
         } finally {
@@ -57,34 +56,28 @@ function SettingsModal(props: SettingsModalProps): JSX.Element {
     const tabItems = [
         {
             key: 'player',
-            label: <Text>Player</Text>,
+            label: <Text>图像浏览</Text>,
             icon: <PlayCircleOutlined />,
             children: <PlayerSettingsContainer />,
         },
         {
             key: 'workspace',
-            label: <Text>Workspace</Text>,
+            label: <Text>标注界面</Text>,
             icon: <LaptopOutlined />,
             children: <WorkspaceSettingsContainer />,
-        },
-        {
-            key: 'shortcuts',
-            label: <Text>Shortcuts</Text>,
-            icon: <BuildOutlined />,
-            children: <ShortcutsSettingsContainer />,
         },
     ];
 
     return (
         <Modal
-            title='Settings'
+            title='设置'
             open={visible}
             onCancel={onClose}
             width={800}
             className='cvat-settings-modal'
             footer={(
                 <Button className='cvat-close-settings-button' type='default' onClick={onClose}>
-                    Close
+                    关闭
                 </Button>
             )}
         >

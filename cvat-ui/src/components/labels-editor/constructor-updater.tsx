@@ -15,11 +15,12 @@ interface Props {
     onUpdate: (label: LabelOptColor) => void;
     onCancel: () => void;
     showLabelType?: boolean;
+    showAttributes?: boolean;
 }
 
 function ConstructorUpdater(props: Props): JSX.Element {
     const {
-        label, labelNames, onUpdate, onCancel, showLabelType,
+        label, labelNames, onUpdate, onCancel, showLabelType, showAttributes,
     } = props;
     const { type } = label;
     const skeletonConfiguratorRef = useRef<SkeletonConfigurator>(null);
@@ -48,6 +49,7 @@ function ConstructorUpdater(props: Props): JSX.Element {
                 onSkeletonSubmit={type === LabelType.SKELETON ? onSkeletonSubmit : undefined}
                 onCancel={onCancel}
                 showLabelType={showLabelType}
+                showAttributes={showAttributes}
             />
             {
                 type === LabelType.SKELETON && (

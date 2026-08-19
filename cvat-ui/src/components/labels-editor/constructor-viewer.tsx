@@ -33,7 +33,7 @@ function ConstructorViewer(props: ConstructorViewerProps): JSX.Element {
 
     const list: JSX.Element[] = [
         <Button key='create' onClick={() => onCreate('basic')} className='cvat-constructor-viewer-new-item'>
-            Add label
+            添加类别
             <PlusCircleOutlined />
         </Button>,
     ];

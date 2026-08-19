@@ -42,6 +42,7 @@ interface Props {
     resetSkeleton?: () => void;
     onCancel: () => void;
     showLabelType?: boolean;
+    showAttributes?: boolean;
 }
 
 type InputRef = React.ComponentRef<typeof Input>;
@@ -160,7 +161,7 @@ export default class LabelForm extends React.Component<Props> {
                 rules={[
                     {
                         required: true,
-                        message: 'Please specify a name',
+                            message: '请输入类别名称',
                     },
                     {
                         pattern: patterns.validateAttributeName.pattern,
@@ -506,7 +507,7 @@ export default class LabelForm extends React.Component<Props> {
                     {
                         validator: (_rule: any, labelName: string) => {
                             if (labelNames.includes(labelName) && label?.name !== labelName) {
-                                return Promise.reject(new Error('Label name must be unique'));
+                                return Promise.reject(new Error('类别名称不能重复'));
                             }
                             return Promise.resolve();
                         },
@@ -515,7 +516,7 @@ export default class LabelForm extends React.Component<Props> {
             >
                 <Input
                     ref={this.inputNameRef}
-                    placeholder='Label name'
+                    placeholder='类别名称'
                     className='cvat-label-name-input'
                     onKeyUp={(event): void => {
                         if (event.key === 'Escape' || event.key === 'Esc' || event.keyCode === 27) {
@@ -566,7 +567,7 @@ export default class LabelForm extends React.Component<Props> {
         return (
             <Form.Item>
                 <Button onClick={this.addAttribute} className='cvat-new-attribute-button'>
-                    Add an attribute
+                    添加属性
                     <PlusCircleOutlined />
                 </Button>
             </Form.Item>
@@ -575,8 +576,8 @@ export default class LabelForm extends React.Component<Props> {
 
     private renderSaveButton(): JSX.Element {
         const { label } = this.props;
-        const tooltipTitle = label ? 'Save the label and return' : 'Save the label and create one more';
-        const buttonText = label ? 'Done' : 'Continue';
+        const tooltipTitle = label ? '保存类别' : '保存后继续添加';
+        const buttonText = label ? '保存' : '保存并继续';
 
         return (
             <CVATTooltip title={tooltipTitle}>
@@ -596,7 +597,7 @@ export default class LabelForm extends React.Component<Props> {
         const { onCancel } = this.props;
 
         return (
-            <CVATTooltip title='Do not save the label and return'>
+            <CVATTooltip title='不保存并返回'>
                 <Button
                     className='cvat-cancel-new-label-button'
                     type='primary'
@@ -606,7 +607,7 @@ export default class LabelForm extends React.Component<Props> {
                         onCancel();
                     }}
                 >
-                    Cancel
+                    取消
                 </Button>
             </CVATTooltip>
         );
@@ -618,7 +619,7 @@ export default class LabelForm extends React.Component<Props> {
                 {() => (
                     <Form.Item name='color'>
                         <ColorPicker placement='bottom'>
-                            <CVATTooltip title='Change color of the label'>
+                            <CVATTooltip title='修改类别颜色'>
                                 <Button type='default' className='cvat-change-task-label-color-button'>
                                     <Badge
                                         className='cvat-change-task-label-color-badge'
@@ -661,7 +662,9 @@ export default class LabelForm extends React.Component<Props> {
     }
 
     public render(): JSX.Element {
-        const { label, onSkeletonSubmit, showLabelType = true } = this.props;
+        const {
+            label, onSkeletonSubmit, showLabelType = true, showAttributes = true,
+        } = this.props;
         const isSkeleton = !!onSkeletonSubmit;
 
         return (
@@ -691,15 +694,19 @@ export default class LabelForm extends React.Component<Props> {
                     <Col span={3} offset={1}>
                         {this.renderChangeColorButton()}
                     </Col>
-                    <Col offset={1}>
-                        {this.renderNewAttributeButton()}
-                    </Col>
+                    {showAttributes && (
+                        <Col offset={1}>
+                            {this.renderNewAttributeButton()}
+                        </Col>
+                    )}
                 </Row>
-                <Row justify='start' align='top'>
-                    <Col span={24}>
-                        <Form.List name='attributes'>{this.renderAttributes()}</Form.List>
-                    </Col>
-                </Row>
+                {showAttributes && (
+                    <Row justify='start' align='top'>
+                        <Col span={24}>
+                            <Form.List name='attributes'>{this.renderAttributes()}</Form.List>
+                        </Col>
+                    </Row>
+                )}
                 <Row justify='start' align='middle'>
                     <Col>{this.renderSaveButton()}</Col>
                     <Col offset={1}>{this.renderCancelButton()}</Col>

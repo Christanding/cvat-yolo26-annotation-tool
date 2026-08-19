@@ -103,7 +103,7 @@ function LoginFormComponent(props: Props): JSX.Element {
                 }
             </Row>
             <Col>
-                <Title level={2}> Sign in </Title>
+                <Title level={2}>登录</Title>
             </Col>
             <Form
                 className={`cvat-login-form ${credential ? 'cvat-login-form-extended' : ''}`}
@@ -120,7 +120,7 @@ function LoginFormComponent(props: Props): JSX.Element {
                         >
                             <Input
                                 autoComplete='credential'
-                                prefix={<Text>Email or username</Text>}
+                                prefix={<Text>用户名</Text>}
                                 className={credential ? 'cvat-input-floating-label-above' : 'cvat-input-floating-label'}
                                 suffix={credential && (
                                     <Icon
@@ -146,14 +146,14 @@ function LoginFormComponent(props: Props): JSX.Element {
                                     rules={[
                                         {
                                             required: true,
-                                            message: 'Please specify a password',
+                                            message: '请输入密码',
                                         },
                                     ]}
                                 >
                                     <CVATSigningInput
                                         type={CVATInputType.PASSWORD}
                                         id='password'
-                                        placeholder='Password'
+                                        placeholder='密码'
                                         autoComplete='password'
                                     />
                                 </Form.Item>
@@ -168,7 +168,7 @@ function LoginFormComponent(props: Props): JSX.Element {
                                         disabled={!credential}
                                         htmlType='submit'
                                     >
-                                        Next
+                                        登录
                                     </Button>
                                 </Form.Item>
                             )

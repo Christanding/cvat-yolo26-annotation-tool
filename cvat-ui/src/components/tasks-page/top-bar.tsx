@@ -3,18 +3,13 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState } from 'react';
 import { useHistory } from 'react-router';
 
 import { Row, Col } from 'antd/lib/grid';
-import Popover from 'antd/lib/popover';
-import {
-    LoadingOutlined, PlusOutlined, SoundOutlined, UploadOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import Button from 'antd/lib/button';
 import Input from 'antd/lib/input';
-import { importActions } from 'actions/import-actions';
 import {
     SortingComponent,
     ResourceFilterHOC,
@@ -22,11 +17,7 @@ import {
     ResourceSelectionInfo,
 } from 'components/resource-sorting-filtering';
 import { TasksQuery } from 'reducers';
-import { usePrevious } from 'utils/hooks';
-import { MultiPlusIcon } from 'icons';
 import dimensions from 'utils/dimensions';
-import CvatDropdownMenuPaper from 'components/common/cvat-dropdown-menu-paper';
-import TasksCSVExportButton from './tasks-csv-export-button';
 import {
     localStorageRecentKeyword, localStorageRecentCapacity, predefinedFilterValues, config,
 } from './tasks-filter-configuration';
@@ -40,26 +31,17 @@ interface VisibleTopBarProps {
     onApplySorting(sorting: string | null): void;
     onApplySearch(search: string | null): void;
     query: TasksQuery;
-    importing: boolean;
     selectedCount: number;
     onSelectAll: () => void;
 }
 
 export default function TopBarComponent(props: Readonly<VisibleTopBarProps>): JSX.Element {
-    const dispatch = useDispatch();
     const {
-        importing, query, onApplyFilter, onApplySorting, onApplySearch,
+        query, onApplyFilter, onApplySorting, onApplySearch,
         selectedCount, onSelectAll,
     } = props;
     const [visibility, setVisibility] = useState(defaultVisibility);
     const history = useHistory();
-    const prevImporting = usePrevious(importing);
-
-    useEffect(() => {
-        if (prevImporting && !importing) {
-            onApplyFilter(query.filter);
-        }
-    }, [importing]);
 
     return (
         <Row className='cvat-tasks-page-top-bar cvat-resource-top-bar-wrapper' justify='center' align='middle'>
@@ -73,7 +55,7 @@ export default function TopBarComponent(props: Readonly<VisibleTopBarProps>): JS
                             }}
                             defaultValue={query.search ?? ''}
                             className='cvat-tasks-page-search-bar'
-                            placeholder='Search ...'
+                            placeholder='搜索任务'
                         />
                         <ResourceSelectionInfo selectedCount={selectedCount} onSelectAll={onSelectAll} />
                     </div>
@@ -104,54 +86,19 @@ export default function TopBarComponent(props: Readonly<VisibleTopBarProps>): JS
                             )}
                             onApplyFilter={onApplyFilter}
                         />
-                        <TasksCSVExportButton query={query} />
                     </div>
                 </div>
                 <div>
-                    <Popover
-                        trigger={['click']}
-                        destroyTooltipOnHide
-                        overlayInnerStyle={{ padding: 0 }}
-                        content={(
-                            <CvatDropdownMenuPaper>
-                                <Button
-                                    className='cvat-create-task-button'
-                                    type='primary'
-                                    onClick={(): void => history.push('/tasks/create')}
-                                    icon={<PlusOutlined />}
-                                >
-                                    Create a new task
-                                </Button>
-                                <Button
-                                    className='cvat-create-audio-task-button'
-                                    type='primary'
-                                    onClick={(): void => history.push('/tasks/create?type=audio')}
-                                    icon={<SoundOutlined />}
-                                >
-                                    Create a new audio task
-                                </Button>
-                                <Button
-                                    className='cvat-create-multi-tasks-button'
-                                    type='primary'
-                                    onClick={(): void => history.push('/tasks/create?many=true')}
-                                    icon={<span className='anticon'><MultiPlusIcon /></span>}
-                                >
-                                    Create multi tasks
-                                </Button>
-                                <Button
-                                    className='cvat-import-task-button'
-                                    type='primary'
-                                    disabled={importing}
-                                    icon={importing ? <LoadingOutlined /> : <UploadOutlined />}
-                                    onClick={() => dispatch(importActions.openImportBackupModal('task'))}
-                                >
-                                    Create from backup
-                                </Button>
-                            </CvatDropdownMenuPaper>
-                        )}
+                    <Button
+                        type='primary'
+                        className='cvat-create-task-dropdown'
+                        icon={<PlusOutlined />}
+                        title='新建任务'
+                        aria-label='新建任务'
+                        onClick={(): void => history.push('/tasks/create')}
                     >
-                        <Button type='primary' className='cvat-create-task-dropdown' icon={<PlusOutlined />} />
-                    </Popover>
+                        新建任务
+                    </Button>
                 </div>
             </Col>
         </Row>

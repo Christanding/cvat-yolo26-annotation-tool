@@ -58,7 +58,7 @@ const SortableItem = SortableElement<SortableItemProps>(
             <div className='cvat-sorting-field'>
                 <Radio.Button disabled={valueIndex > anchorIndex}>{value}</Radio.Button>
                 <div>
-                    <CVATTooltip overlay={appliedSorting[value]?.startsWith('-') ? 'Descending sort' : 'Ascending sort'}>
+                    <CVATTooltip overlay={appliedSorting[value]?.startsWith('-') ? '降序' : '升序'}>
                         <Button className='cvat-switch-sort-order-button' type='text' disabled={!isActiveField} onClick={onClick}>
                             {
                                 isDescendingField ? (
@@ -205,7 +205,7 @@ function SortingModalComponent(props: Props): JSX.Element {
                 type='default'
                 onClick={() => onVisibleChange(!visible)}
             >
-                Sort by
+                排序
                 <OrderedListOutlined />
             </Button>
         </Popover>

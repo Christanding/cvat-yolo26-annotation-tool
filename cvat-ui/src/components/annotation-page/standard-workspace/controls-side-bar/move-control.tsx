@@ -20,7 +20,7 @@ function MoveControl(props: Props): JSX.Element {
     const { canvasInstance, activeControl } = props;
 
     return (
-        <CVATTooltip title='Move the image' placement='right'>
+        <CVATTooltip title='平移图片' placement='right'>
             <Icon
                 component={MoveIcon}
                 className={

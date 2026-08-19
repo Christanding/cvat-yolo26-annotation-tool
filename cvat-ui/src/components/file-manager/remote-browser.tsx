@@ -25,6 +25,7 @@ import CVATTooltip from 'components/common/cvat-tooltip';
 import { CloudStorage } from 'cvat-core-wrapper';
 import { RemoteFileType } from 'reducers';
 import { useIsMounted } from 'utils/hooks';
+import { listWorkspace } from 'utils/local-api';
 
 interface Node {
     children: Node[];
@@ -78,24 +79,9 @@ function prefixToSearch(prefix?: string): string {
     return defaultSearchString;
 }
 
-interface WorkspaceEntry {
-    path: string;
-    kind: 'directory' | 'image' | 'video' | 'archive';
-}
-
 async function getWorkspaceContent(path: string): Promise<RemoteNode[]> {
-    const query = new URLSearchParams();
-    if (path) query.set('path', path);
-
-    const response = await fetch(`/api/local/workspace?${query.toString()}`, {
-        credentials: 'same-origin',
-    });
-    if (!response.ok) {
-        throw new Error(`工作区读取失败（HTTP ${response.status}）`);
-    }
-
-    const entries = await response.json() as WorkspaceEntry[];
-    return entries.map((entry) => ({
+    const entries = await listWorkspace(path);
+    return entries.filter((entry) => entry.kind === 'directory' || entry.kind === 'image').map((entry) => ({
         name: entry.path.split('/').pop() || entry.path,
         type: entry.kind === 'directory' ? 'DIR' : 'REG',
         mimeType: entry.kind === 'directory' ? 'DIR' : entry.kind,
@@ -351,7 +337,7 @@ function RemoteBrowser(props: Props): JSX.Element {
             <>
                 <Empty />
                 <Paragraph className='cvat-remote-browser-empty'>
-                    当前文件夹中没有可用的 JPG、PNG、MP4、MOV 或 ZIP 文件。
+                    当前文件夹中没有可用的 JPG 或 PNG 图片。
                 </Paragraph>
             </>
         );

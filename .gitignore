@@ -1,0 +1,54 @@
+# Operating systems and editors
+.DS_Store
+._*
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local configuration and secrets
+.env*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Node.js and frontend builds
+node_modules/
+.next/
+coverage/
+dist/
+build/
+
+# Runtime files
+*.log
+logs/
+tmp/
+temp/
+cache/
+storage/
+uploads/
+
+# Datasets and experiment outputs
+datasets/
+runs/
+outputs/
+artifacts/
+
+# Model weights and deployment binaries
+*.pt
+*.pth
+*.onnx
+*.engine
+*.rknn
+*.bmodel
+*.tflite

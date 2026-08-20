@@ -31,7 +31,7 @@ google-cloud-storage~=3.0
 lxml>=5.2.1,<6
 natsort~=8.0
 numpy~=2.0
-opencv-python-headless~=4.8
+opencv-python-headless~=5.0
 
 # Partial json reading
 json-stream>=2.0,<3

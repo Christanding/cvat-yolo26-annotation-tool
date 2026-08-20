@@ -19,8 +19,8 @@ import { SaveIcon } from 'icons';
 
 const componentShortcuts = {
     SAVE_JOB: {
-        name: 'Save the job',
-        description: 'Submit unsaved changes of annotations to the server',
+        name: '保存标注',
+        description: '保存尚未提交的标注修改',
         sequences: ['ctrl+s'],
         scope: ShortcutScope.ANNOTATION_PAGE,
     },
@@ -28,7 +28,7 @@ const componentShortcuts = {
 
 registerComponentShortcuts(componentShortcuts);
 
-function SaveAnnotationsButton() {
+function SaveAnnotationsButton(): JSX.Element {
     const dispatch = useDispatch();
     const { isSaving, keyMap, normKeyMap } = useSelector((state: CombinedState) => ({
         isSaving: state.annotation.annotations.saving.uploading,

@@ -42,9 +42,9 @@ function LayerHeader(props: LayerHeaderProps): JSX.Element {
         ...(!visible ? ['cvat-objects-sidebar-z-layer-mark-invisible'] : []),
     ].join(' ');
 
-    const visibilityTooltip = visible ? 'Visible on canvas' : 'Hidden on canvas';
-    const selectLayerTooltip = selected ? 'Current layer. Higher layers are hidden on canvas' :
-        'Select as current layer. Higher layers will not be visible on canvas';
+    const visibilityTooltip = visible ? '已在画布上显示' : '已在画布上隐藏';
+    const selectLayerTooltip = selected ? '当前图层；更高图层已隐藏' :
+        '设为当前图层；更高图层将被隐藏';
 
     return (
         <div
@@ -53,7 +53,7 @@ function LayerHeader(props: LayerHeaderProps): JSX.Element {
             style={style}
         >
             <div>
-                <CVATTooltip title={collapsed ? 'Expand layer' : 'Collapse layer'}>
+                <CVATTooltip title={collapsed ? '展开图层' : '折叠图层'}>
                     <Button
                         className='cvat-objects-sidebar-z-layer-collapse-button'
                         type='text'
@@ -71,7 +71,7 @@ function LayerHeader(props: LayerHeaderProps): JSX.Element {
                         onClick={(): void => selectLayer(zOrder)}
                     />
                 </CVATTooltip>
-                <CVATTooltip title='Drag layer'>
+                <CVATTooltip title='拖动图层'>
                     <Button
                         {...attributes}
                         {...listeners}

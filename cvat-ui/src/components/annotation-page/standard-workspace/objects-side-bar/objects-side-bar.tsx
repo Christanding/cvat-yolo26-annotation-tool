@@ -61,12 +61,12 @@ function ObjectsSideBar(props: StateToProps & DispatchToProps & OwnProps): JSX.E
         >
             {/* eslint-disable-next-line */}
             <span className='cvat-objects-sidebar-sider' onClick={collapse}>
-                {sidebarCollapsed ? <MenuFoldOutlined title='显示对象列表' /> : <MenuUnfoldOutlined title='隐藏对象列表' />}
+                {sidebarCollapsed ? <MenuFoldOutlined title='显示标注框列表' /> : <MenuUnfoldOutlined title='隐藏标注框列表' />}
             </span>
             <Tabs
                 type='card'
                 className='cvat-objects-sidebar-tabs'
-                items={[{ key: 'objects', label: '标注', children: objectsList }]}
+                items={[{ key: 'objects', label: '标注框', children: objectsList }]}
             />
         </Layout.Sider>
     );

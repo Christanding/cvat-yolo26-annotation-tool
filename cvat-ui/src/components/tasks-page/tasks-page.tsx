@@ -33,7 +33,7 @@ interface Props {
 
 function TasksPageComponent(props: Readonly<Props>): JSX.Element {
     const {
-        query, fetching, importing, count, bulkFetching,
+        query, fetching, count, bulkFetching,
     } = props;
 
     const dispatch = useDispatch();
@@ -105,24 +105,6 @@ function TasksPageComponent(props: Readonly<Props>): JSX.Element {
                         getTasksAsync({
                             ...query,
                             search,
-                            page: 1,
-                        }),
-                    );
-                }}
-                onApplyFilter={(filter: string | null) => {
-                    dispatch(
-                        getTasksAsync({
-                            ...query,
-                            filter,
-                            page: 1,
-                        }),
-                    );
-                }}
-                onApplySorting={(sorting: string | null) => {
-                    dispatch(
-                        getTasksAsync({
-                            ...query,
-                            sort: sorting,
                             page: 1,
                         }),
                     );

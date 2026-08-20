@@ -7,7 +7,10 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { connect, Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
+import ConfigProvider from 'antd/lib/config-provider';
+import zhCN from 'antd/locale/zh_CN';
 import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import localeData from 'dayjs/plugin/localeData';
@@ -20,9 +23,9 @@ import duration from 'dayjs/plugin/duration';
 import { getAboutAsync } from 'actions/about-actions';
 import { authenticatedAsync } from 'actions/auth-actions';
 import { getFormatsAsync } from 'actions/formats-actions';
-import { getModelsAsync } from 'actions/models-actions';
+import { modelsActions } from 'actions/models-actions';
 import { getPluginsAsync } from 'actions/plugins-actions';
-import { getUserAgreementsAsync } from 'actions/useragreements-actions';
+import { userAgreementsActions } from 'actions/useragreements-actions';
 import CVATApplication from 'components/cvat-app';
 import PluginsEntrypoint from 'components/plugins-entrypoint';
 import LayoutGrid from 'components/layout-grid/layout-grid';
@@ -50,6 +53,7 @@ dayjs.extend(localeData);
 dayjs.extend(weekOfYear);
 dayjs.extend(weekYear);
 dayjs.extend(duration);
+dayjs.locale('zh-cn');
 
 interface StateToProps {
     pluginsInitialized: boolean;
@@ -133,9 +137,9 @@ function mapDispatchToProps(dispatch: any): DispatchToProps {
     return {
         loadFormats: (): void => dispatch(getFormatsAsync()),
         verifyAuthenticated: (): void => dispatch(authenticatedAsync()),
-        loadUserAgreements: (): void => dispatch(getUserAgreementsAsync()),
+        loadUserAgreements: (): void => dispatch(userAgreementsActions.getUserAgreementsSuccess([])),
         initPlugins: (): void => dispatch(getPluginsAsync()),
-        initModels: (): void => dispatch(getModelsAsync()),
+        initModels: (): void => dispatch(modelsActions.getModelsSuccess([], 0)),
         loadAbout: (): void => dispatch(getAboutAsync()),
         resetErrors: (): void => dispatch(resetErrors()),
         resetMessages: (): void => dispatch(resetMessages()),
@@ -151,13 +155,15 @@ const ReduxAppWrapper = connect(mapStateToProps, mapDispatchToProps)(CVATApplica
 
 const root = createRoot(document.getElementById('root') as HTMLDivElement);
 root.render((
-    <Provider store={cvatStore}>
-        <BrowserRouter>
-            <PluginsEntrypoint />
-            <ReduxAppWrapper />
-        </BrowserRouter>
-        <LayoutGrid />
-    </Provider>
+    <ConfigProvider locale={zhCN}>
+        <Provider store={cvatStore}>
+            <BrowserRouter>
+                <PluginsEntrypoint />
+                <ReduxAppWrapper />
+            </BrowserRouter>
+            <LayoutGrid />
+        </Provider>
+    </ConfigProvider>
 ));
 
 window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {

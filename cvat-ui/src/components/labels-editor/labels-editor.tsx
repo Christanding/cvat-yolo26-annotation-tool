@@ -175,10 +175,12 @@ export default class LabelsEditor extends React.PureComponent<LabelsEditorProps,
             modal.confirm({
                 className: 'cvat-modal-delete-label',
                 icon: <ExclamationCircleOutlined />,
-                title: `Do you want to delete "${label.name}" label?`,
-                content: 'This action cannot be undone. All annotations associated to the label will be deleted.',
+                title: `确认删除类别“${label.name}”？`,
+                content: '删除后无法撤销，与该类别关联的全部标注也将删除。',
                 type: 'warning',
                 okButtonProps: { type: 'primary', danger: true },
+                okText: '删除',
+                cancelText: '取消',
                 onOk: deleteLabel,
             });
         } else {
@@ -376,6 +378,5 @@ export default class LabelsEditor extends React.PureComponent<LabelsEditorProps,
                 }]}
             />
         );
-
     }
 }

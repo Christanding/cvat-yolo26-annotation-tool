@@ -19,11 +19,14 @@ import notification from 'antd/lib/notification';
 import { SyncOutlined } from '@ant-design/icons';
 
 import {
+    appendTaskImages,
+    AppendableTask,
     createExtraction,
     ExtractionParameters,
     ExtractionResult,
     getExtraction,
     listVideos,
+    listAppendableTasks,
     LocalAPIError,
     VideoMetadata,
 } from 'utils/local-api';
@@ -41,6 +44,10 @@ export default function VideoExtractionPage(): JSX.Element {
     const [jobId, setJobId] = useState<string>();
     const [progress, setProgress] = useState(0);
     const [result, setResult] = useState<ExtractionResult>();
+    const [tasks, setTasks] = useState<AppendableTask[]>([]);
+    const [selectedTaskID, setSelectedTaskID] = useState<number>();
+    const [loadingTasks, setLoadingTasks] = useState(false);
+    const [addingImages, setAddingImages] = useState(false);
 
     const selectedVideo = videos.find((video) => video.path === selectedPath);
 
@@ -62,8 +69,24 @@ export default function VideoExtractionPage(): JSX.Element {
         }
     };
 
+    const refreshTasks = async (): Promise<void> => {
+        setLoadingTasks(true);
+        try {
+            const items = await listAppendableTasks();
+            setTasks(items);
+            if (selectedTaskID && !items.some((item) => item.id === selectedTaskID)) {
+                setSelectedTaskID(undefined);
+            }
+        } catch (error: any) {
+            notification.error({ message: '无法读取任务列表', description: error.message });
+        } finally {
+            setLoadingTasks(false);
+        }
+    };
+
     useEffect(() => {
         refreshVideos();
+        refreshTasks();
     }, []);
 
     useEffect(() => {
@@ -79,6 +102,7 @@ export default function VideoExtractionPage(): JSX.Element {
                 if (status.status === 'finished' && status.result) {
                     setResult(status.result);
                     setJobId(undefined);
+                    refreshTasks();
                     notification.success({ message: '视频抽帧完成' });
                 } else if (status.status === 'failed') {
                     setJobId(undefined);
@@ -141,6 +165,30 @@ export default function VideoExtractionPage(): JSX.Element {
         }
     };
 
+    const addImagesToTask = async (): Promise<void> => {
+        if (!result || !selectedTaskID) {
+            notification.warning({ message: '请先选择要加入的任务' });
+            return;
+        }
+        setAddingImages(true);
+        try {
+            const appendResult = await appendTaskImages(selectedTaskID, result.output_path);
+            const task = tasks.find((item) => item.id === selectedTaskID);
+            notification.success({
+                message: '图片已加入任务',
+                description: (
+                    `已向“${task?.name || `任务 #${selectedTaskID}`}”添加 ` +
+                    `${appendResult.added_count} 张图片，任务现有 ${appendResult.total_count} 张图片。`
+                ),
+            });
+            await refreshTasks();
+        } catch (error: any) {
+            notification.error({ message: '无法添加图片', description: error.message });
+        } finally {
+            setAddingImages(false);
+        }
+    };
+
     return (
         <Row justify='center' align='top' className='cvat-video-extraction-page'>
             <Col md={20} lg={16} xl={14} xxl={12}>
@@ -184,24 +232,43 @@ export default function VideoExtractionPage(): JSX.Element {
                             <Alert
                                 type='info'
                                 showIcon
-                                message={`时长 ${selectedVideo.duration} 秒，${selectedVideo.width}×${selectedVideo.height}，${selectedVideo.fps.toFixed(2)} fps`}
+                                message={(
+                                    `时长 ${selectedVideo.duration} 秒，` +
+                                    `${selectedVideo.width}×${selectedVideo.height}，` +
+                                    `${selectedVideo.fps.toFixed(2)} fps`
+                                )}
                             />
                         ) : null}
 
                         <Row gutter={16}>
                             <Col span={8}>
                                 <Form.Item label='开始时间（秒）'>
-                                    <InputNumber min={0} precision={0} value={startTime} onChange={(value) => setStartTime(value || 0)} />
+                                    <InputNumber
+                                        min={0}
+                                        precision={0}
+                                        value={startTime}
+                                        onChange={(value) => setStartTime(value || 0)}
+                                    />
                                 </Form.Item>
                             </Col>
                             <Col span={8}>
                                 <Form.Item label='结束时间（秒）'>
-                                    <InputNumber min={0} precision={0} value={endTime} onChange={(value) => setEndTime(value || 0)} />
+                                    <InputNumber
+                                        min={0}
+                                        precision={0}
+                                        value={endTime}
+                                        onChange={(value) => setEndTime(value || 0)}
+                                    />
                                 </Form.Item>
                             </Col>
                             <Col span={8}>
                                 <Form.Item label='抽帧间隔（秒）'>
-                                    <InputNumber min={1} precision={0} value={interval} onChange={(value) => setInterval(value || 1)} />
+                                    <InputNumber
+                                        min={1}
+                                        precision={0}
+                                        value={interval}
+                                        onChange={(value) => setInterval(value || 1)}
+                                    />
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -232,13 +299,49 @@ export default function VideoExtractionPage(): JSX.Element {
 
                     {jobId ? <Progress percent={progress} status='active' /> : null}
                     {result ? (
-                        <Descriptions title='抽帧结果' bordered column={2}>
-                            <Descriptions.Item label='原始抽取数量'>{result.source_count}</Descriptions.Item>
-                            <Descriptions.Item label='完全重复数量'>{result.exact_duplicates}</Descriptions.Item>
-                            <Descriptions.Item label='相似帧跳过数量'>{result.similar_skipped}</Descriptions.Item>
-                            <Descriptions.Item label='最终保留数量'>{result.kept_count}</Descriptions.Item>
-                            <Descriptions.Item label='输出目录' span={2}>{result.output_path}</Descriptions.Item>
-                        </Descriptions>
+                        <>
+                            <Descriptions title='抽帧结果' bordered column={2}>
+                                <Descriptions.Item label='原始抽取数量'>{result.source_count}</Descriptions.Item>
+                                <Descriptions.Item label='完全重复数量'>{result.exact_duplicates}</Descriptions.Item>
+                                <Descriptions.Item label='相似帧跳过数量'>{result.similar_skipped}</Descriptions.Item>
+                                <Descriptions.Item label='最终保留数量'>{result.kept_count}</Descriptions.Item>
+                                <Descriptions.Item label='输出目录' span={2}>{result.output_path}</Descriptions.Item>
+                            </Descriptions>
+                            <Form layout='vertical' className='cvat-video-extraction-append-form'>
+                                <Form.Item
+                                    label='加入已有任务'
+                                    extra='新加入的图片状态为“未检查”，任务类别及已有标注保持不变。'
+                                >
+                                    <Row gutter={8} wrap={false}>
+                                        <Col flex='auto'>
+                                            <Select
+                                                showSearch
+                                                optionFilterProp='label'
+                                                loading={loadingTasks}
+                                                value={selectedTaskID}
+                                                placeholder='选择本地工作区图片任务'
+                                                options={tasks.map((task) => ({
+                                                    value: task.id,
+                                                    label: `${task.name}（${task.size} 张）`,
+                                                }))}
+                                                onChange={setSelectedTaskID}
+                                                notFoundContent='没有可追加图片的任务'
+                                            />
+                                        </Col>
+                                        <Col>
+                                            <Button
+                                                type='primary'
+                                                loading={addingImages}
+                                                disabled={!selectedTaskID}
+                                                onClick={addImagesToTask}
+                                            >
+                                                添加图片
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Form.Item>
+                            </Form>
+                        </>
                     ) : null}
                 </Card>
             </Col>

@@ -13,7 +13,6 @@ import { ThunkDispatch, ThunkAction } from 'utils/redux';
 
 import { ValidationMode } from 'components/create-task-page/quality-configuration-form';
 import { ResourceUpdateTypes } from 'utils/enums';
-import { getInferenceStatusAsync } from './models-actions';
 import { updateRequestProgress } from './requests-actions';
 
 const cvat = getCore();
@@ -94,7 +93,6 @@ export function getTasksAsync(
 
         if (isRequestRelevant()) {
             const array = Array.from(result);
-            dispatch(getInferenceStatusAsync());
             dispatch(getTasksSuccess(array, result.count));
         }
     };
@@ -302,10 +300,10 @@ ThunkAction {
                     let helperMessage = '';
                     if (!message) {
                         if ([RQStatus.QUEUED, RQStatus.STARTED].includes(status)) {
-                            message = 'CVAT queued the task to import';
-                            helperMessage = 'You may close the window.';
+                            message = '任务已进入导入队列';
+                            helperMessage = '可以关闭当前页面。';
                         } else if (status === RQStatus.FAILED) {
-                            message = 'Images processing failed';
+                            message = '图片处理失败';
                         } else if (status === RQStatus.FINISHED) {
                             message = 'Task creation finished';
                         } else {

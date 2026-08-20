@@ -308,7 +308,7 @@ function RemoveItem(props: ItemProps): JSX.Element {
                 onClick={remove}
                 className='cvat-object-item-menu-remove-object'
             >
-                Remove
+                删除标注框
             </Button>
         </CVATTooltip>
     );
@@ -460,7 +460,7 @@ export default function ItemMenu(props: Props): MenuProps {
     });
 
     return {
-        items,
+        items: items.filter((item) => item && 'key' in item && item.key === MenuKeys.REMOVE_ITEM),
         onClick: (event): void => {
             event.domEvent.stopPropagation();
         },

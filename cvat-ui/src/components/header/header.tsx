@@ -27,7 +27,7 @@ import config from 'config';
 
 import CVATLogo from 'components/common/cvat-logo';
 import { switchSettingsModalVisible as switchSettingsModalVisibleAction } from 'actions/settings-actions';
-import { shortcutsActions, registerComponentShortcuts } from 'actions/shortcuts-actions';
+import { registerComponentShortcuts } from 'actions/shortcuts-actions';
 import { AboutState, CombinedState } from 'reducers';
 import GlobalHotKeys, { KeyMap } from 'utils/mousetrap-react';
 import { ShortcutScope } from 'utils/enums';
@@ -40,22 +40,14 @@ interface StateToProps {
     keyMap: KeyMap;
     switchSettingsShortcut: string;
     settingsModalVisible: boolean;
-    shortcutsModalVisible: boolean;
     logoutFetching: boolean;
 }
 
 interface DispatchToProps {
     switchSettingsModalVisible: (visible: boolean) => void;
-    switchShortcutsModalVisible: (visible: boolean) => void;
 }
 
 const componentShortcuts = {
-    SWITCH_SHORTCUTS: {
-        name: '显示快捷键',
-        description: '打开或关闭快捷键列表',
-        sequences: ['f1'],
-        scope: ShortcutScope.GENERAL,
-    },
     SWITCH_SETTINGS: {
         name: '显示设置',
         description: '打开或关闭设置窗口',
@@ -70,7 +62,7 @@ function mapStateToProps(state: CombinedState): StateToProps {
     const {
         auth: { user, fetching: logoutFetching },
         about,
-        shortcuts: { normalizedKeyMap, keyMap, visibleShortcutsHelp: shortcutsModalVisible },
+        shortcuts: { normalizedKeyMap, keyMap },
         settings: { showDialog: settingsModalVisible },
     } = state;
 
@@ -80,16 +72,12 @@ function mapStateToProps(state: CombinedState): StateToProps {
         switchSettingsShortcut: normalizedKeyMap.SWITCH_SETTINGS,
         keyMap,
         settingsModalVisible,
-        shortcutsModalVisible,
         logoutFetching,
     };
 }
 
 function mapDispatchToProps(dispatch: any): DispatchToProps {
     return {
-        switchShortcutsModalVisible: (visible: boolean): void => dispatch(
-            shortcutsActions.switchShortcutsModalVisible(visible),
-        ),
         switchSettingsModalVisible: (visible: boolean): void => dispatch(
             switchSettingsModalVisibleAction(visible),
         ),
@@ -105,10 +93,8 @@ function HeaderComponent(props: Props): JSX.Element {
         keyMap,
         logoutFetching,
         settingsModalVisible,
-        shortcutsModalVisible,
         switchSettingsShortcut,
         switchSettingsModalVisible,
-        switchShortcutsModalVisible,
     } = props;
 
     const { LICENSE_URL, GITHUB_URL } = config;
@@ -116,17 +102,9 @@ function HeaderComponent(props: Props): JSX.Element {
     const location = useLocation();
 
     const handlers: Record<keyof typeof componentShortcuts, (event?: KeyboardEvent) => void> = {
-        SWITCH_SHORTCUTS: (event: KeyboardEvent | undefined) => {
-            if (event) event.preventDefault();
-            if (!settingsModalVisible) {
-                switchShortcutsModalVisible(!shortcutsModalVisible);
-            }
-        },
         SWITCH_SETTINGS: (event: KeyboardEvent | undefined) => {
             if (event) event.preventDefault();
-            if (!shortcutsModalVisible) {
-                switchSettingsModalVisible(!settingsModalVisible);
-            }
+            switchSettingsModalVisible(!settingsModalVisible);
         },
     };
 

@@ -403,7 +403,7 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                 return e?.fileList[0];
             }}
             name='dragger'
-            rules={[{ required: true, message: 'The file is required' }]}
+            rules={[{ required: true, message: '请选择 ZIP 标注包' }]}
         >
             <Upload.Dragger
                 listType='text'
@@ -417,7 +417,7 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                 }
                 beforeUpload={(_file: RcFile): boolean => {
                     if (!selectedLoader) {
-                        message.warning('Please select a format first', 3);
+                        message.warning('请先选择导入格式', 3);
                     } else if (isDataset() && !['application/zip', 'application/x-zip-compressed'].includes(_file.type)) {
                         message.error('Only ZIP archive is supported for import a dataset');
                     } else if (isAnnotation() &&
@@ -445,7 +445,7 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
 
     const validateFileName = (_: RuleObject, value: string): Promise<void> => {
         if (!selectedLoader) {
-            message.warning('Please select a format first', 3);
+            message.warning('请先选择导入格式', 3);
             return Promise.reject();
         }
         if (value) {
@@ -528,15 +528,18 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
 
     const confirmUpload = (): void => {
         const isAppend = uploadParams.importMode === 'append';
-        const annotationEntity = isTask() ? 'task' : 'job';
-        const title = isTask() ? '导入并替换当前标注？' :
-            (isAppend ? 'Append annotations?' : 'Replace existing annotations?');
-        const content = isTask() ?
-            '导入包必须与当前任务的图片和类别完全对应。现有标注将被替换。' : isAppend ?
-            `Uploaded annotations will be added to the existing annotations in this ${annotationEntity}. ` +
-                'Existing annotations will not be removed.' :
-            `This will remove the current annotations in this ${annotationEntity} and ` +
-                'upload annotations from the selected file instead.';
+        let title = '导入并替换当前标注？';
+        let content = '导入包必须与当前任务的图片和类别完全对应。现有标注将被替换。';
+        let okText = '确认导入';
+        if (!isTask() && isAppend) {
+            title = '追加标注？';
+            content = '导入的标注将追加到现有标注中，不会删除原有标注。';
+            okText = '追加标注';
+        } else if (!isTask()) {
+            title = '替换现有标注？';
+            content = '现有标注将被删除，并替换为所选文件中的标注。';
+            okText = '替换标注';
+        }
 
         confirm({
             title,
@@ -549,8 +552,8 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                 type: 'primary',
                 danger: true,
             },
-            okText: isTask() ? '确认导入' : (isAppend ? 'Append annotations' : 'Replace annotations'),
-            cancelText: isTask() ? '取消' : 'Cancel',
+            okText,
+            cancelText: '取消',
         });
     };
 
@@ -618,7 +621,7 @@ function ImportDatasetModal(props: StateToProps): JSX.Element {
                     hasFeedback
                 >
                     <Select
-                        placeholder={`Select ${resource} format`}
+                        placeholder='选择导入格式'
                         className='cvat-modal-import-select'
                         virtual={false}
                         disabled={isTask()}

@@ -44,7 +44,6 @@ function DrawShapePopoverComponent(props: Props): JSX.Element {
         minimumPoints,
         selectedLabelID,
         numberOfPoints,
-        rectDrawingMethod,
         cuboidDrawingMethod,
         repeatShapeShortcut,
         simplifyPoly,
@@ -52,7 +51,6 @@ function DrawShapePopoverComponent(props: Props): JSX.Element {
         onDrawShape,
         onChangeLabel,
         onChangePoints,
-        onChangeRectDrawingMethod,
         onChangeCuboidDrawingMethod,
         onChangeSimplifyPoly,
         jobInstance,
@@ -159,7 +157,7 @@ function DrawShapePopoverComponent(props: Props): JSX.Element {
             ) : null}
             <Row justify='space-around'>
                 <Col span={24}>
-                    <CVATTooltip title={`Press ${repeatShapeShortcut} to draw again`}>
+                    <CVATTooltip title={`按 ${repeatShapeShortcut} 可继续绘制`}>
                         <Button className={`cvat-draw-${shapeType}-shape-button`} onClick={onDrawShape}>开始绘制</Button>
                     </CVATTooltip>
                     {shapeType !== ShapeType.MASK && shapeType !== ShapeType.RECTANGLE && (

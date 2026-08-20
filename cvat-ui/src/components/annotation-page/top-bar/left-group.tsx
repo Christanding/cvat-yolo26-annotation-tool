@@ -40,24 +40,55 @@ interface Props {
 
 const componentShortcuts = {
     UNDO: {
-        name: 'Undo action',
-        description: 'Cancel the latest action related with objects',
+        name: '撤销',
+        description: '撤销上一次标注操作',
         sequences: ['ctrl+z'],
         scope: ShortcutScope.ANNOTATION_PAGE,
     },
     REDO: {
-        name: 'Redo action',
-        description: 'Cancel undo action',
+        name: '重做',
+        description: '恢复上一次撤销的操作',
         sequences: ['ctrl+shift+z', 'ctrl+y'],
         scope: ShortcutScope.ANNOTATION_PAGE,
     },
     SWITCH_TOOLS_BLOCKER_STATE: {
-        name: 'Switch algorithm blocker',
-        description: 'Postpone running the algorithm for interaction tools',
+        name: '暂停算法工具',
+        description: '暂停交互式算法工具',
         sequences: ['tab'],
         scope: ShortcutScope.STANDARD_WORKSPACE,
     },
 };
+
+const historyActionNames: Record<string, string> = {
+    'Changed label': '修改类别',
+    'Changed attributes': '修改属性',
+    'Changed points': '调整标注框',
+    'Object rotated': '旋转标注',
+    'Changed outside': '修改画面外状态',
+    'Changed occluded': '修改遮挡状态',
+    'Changed z-order': '修改图层顺序',
+    'Changed keyframe': '修改关键帧',
+    'Changed lock': '修改锁定状态',
+    'Changed pinned': '修改固定状态',
+    'Changed color': '修改颜色',
+    'Changed hidden': '修改显示状态',
+    'Changed source': '修改来源',
+    'Changed audio position': '修改音频位置',
+    'Merged objects': '合并标注',
+    'Joined objects': '连接标注',
+    'Sliced object': '切分标注',
+    'Splitted track': '拆分轨迹',
+    'Grouped objects': '组合标注',
+    'Created objects': '创建标注框',
+    'Removed object': '删除标注框',
+    'Removed frame': '删除图片',
+    'Restored frame': '恢复图片',
+    'Commit annotations': '提交标注',
+};
+
+function localizeHistoryAction(action?: string): string {
+    return action ? historyActionNames[action] || action : '';
+}
 
 registerComponentShortcuts(componentShortcuts);
 
@@ -117,7 +148,7 @@ function LeftGroup(props: Props): JSX.Element {
             <Col className='cvat-annotation-header-left-group'>
                 <AnnotationMenuComponent />
                 <SaveAnnotationsButton />
-                <CVATTooltip overlay={`撤销：${undoAction || ''} ${undoShortcut}`}>
+                <CVATTooltip overlay={`撤销：${localizeHistoryAction(undoAction)} ${undoShortcut}`}>
                     <Button
                         style={{ pointerEvents: undoAction ? 'initial' : 'none', opacity: undoAction ? 1 : 0.5 }}
                         type='link'
@@ -128,7 +159,7 @@ function LeftGroup(props: Props): JSX.Element {
                         <span>撤销</span>
                     </Button>
                 </CVATTooltip>
-                <CVATTooltip overlay={`重做：${redoAction || ''} ${redoShortcut}`}>
+                <CVATTooltip overlay={`重做：${localizeHistoryAction(redoAction)} ${redoShortcut}`}>
                     <Button
                         style={{ pointerEvents: redoAction ? 'initial' : 'none', opacity: redoAction ? 1 : 0.5 }}
                         type='link'

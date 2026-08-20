@@ -24,7 +24,6 @@ import ResetPasswordPageComponent from 'components/reset-password-page/reset-pas
 import Header from 'components/header/header';
 import GlobalErrorBoundary from 'components/global-error-boundary/global-error-boundary';
 
-import ShortcutsDialog from 'components/shortcuts-dialog/shortcuts-dialog';
 import ExportDatasetModal from 'components/export-dataset/export-dataset-modal';
 import ExportBackupModal from 'components/export-backup/export-backup-modal';
 import ImportDatasetModal from 'components/import-dataset/import-dataset-modal';
@@ -228,7 +227,7 @@ class CVATApplication extends React.PureComponent<CVATAppProps & RouteComponentP
             });
         })
             .catch((error: unknown) => {
-                const healthCheckError = error instanceof Error ? error.message : 'The CVAT server is not reachable.';
+                const healthCheckError = error instanceof Error ? error.message : '无法连接服务器。';
 
                 this.setState({
                     healthIinitialized: true,
@@ -244,22 +243,21 @@ class CVATApplication extends React.PureComponent<CVATAppProps & RouteComponentP
         if (showPlatformNotification()) {
             stopNotifications(false);
             Modal.warning({
-                title: 'Unsupported platform detected',
+                title: '当前平台未经验证',
                 className: 'cvat-modal-unsupported-platform-warning',
                 content: (
                     <>
                         <Row>
                             <Col>
                                 <Text>
-                                    {`The browser you are using is ${name} ${version} based on ${engine}.` +
-                                        ' CVAT was tested in the latest versions of Chrome and Firefox.' +
-                                        ' We recommend to use Chrome (or another Chromium based browser)'}
+                                    {`当前浏览器为 ${name} ${version}，渲染引擎为 ${engine}。` +
+                                        ' 本软件优先支持最新版 Edge，也可使用其他 Chromium 浏览器。'}
                                 </Text>
                             </Col>
                         </Row>
                         <Row>
                             <Col>
-                                <Text type='secondary'>{`The operating system is ${os}`}</Text>
+                                <Text type='secondary'>{`操作系统：${os}`}</Text>
                             </Col>
                         </Row>
                     </>
@@ -269,12 +267,12 @@ class CVATApplication extends React.PureComponent<CVATAppProps & RouteComponentP
         } else if (showUnsupportedNotification()) {
             stopNotifications(false);
             Modal.warning({
-                title: 'Unsupported features detected',
+                title: '浏览器功能不完整',
                 className: 'cvat-modal-unsupported-features-warning',
                 content: (
                     <Text>
-                        {`${name} v${version} does not support API, which is used by CVAT. `}
-                        It is strongly recommended to update your browser.
+                        {`${name} ${version} 不支持软件所需的浏览器 API。`}
+                        请升级浏览器后再使用。
                     </Text>
                 ),
                 onOk: () => stopNotifications(true),
@@ -434,7 +432,7 @@ class CVATApplication extends React.PureComponent<CVATAppProps & RouteComponentP
                 ),
                 duration: null,
                 description: errorLength > appConfig.MAXIMUM_NOTIFICATION_MESSAGE_LENGTH ?
-                    'Open the Browser Console to get details' : <CVATMarkdown history={history}>{error}</CVATMarkdown>,
+                    '详细信息请查看浏览器控制台。' : <CVATMarkdown history={history}>{error}</CVATMarkdown>,
             });
 
             if (shouldLog) {
@@ -517,7 +515,6 @@ class CVATApplication extends React.PureComponent<CVATAppProps & RouteComponentP
                             <Layout>
                                 <Header />
                                 <Layout.Content style={{ height: '100%' }}>
-                                    <ShortcutsDialog />
                                     <Switch>
                                         <Route exact path='/auth/logout' component={LogoutComponent} />
                                         <Route exact path='/projects' component={ProjectsPageComponent} />
@@ -635,7 +632,7 @@ class CVATApplication extends React.PureComponent<CVATAppProps & RouteComponentP
                 <Space align='center' direction='vertical' className='cvat-spinner cvat-server-unavailable'>
                     <DisconnectOutlined className='cvat-disconnected' />
                     <Text className='cvat-server-unavailable-title' strong>
-                        Cannot connect to the server
+                        无法连接服务器
                     </Text>
                     <ServerUnavailableComponent details={healthCheckError} />
                 </Space>
@@ -643,7 +640,7 @@ class CVATApplication extends React.PureComponent<CVATAppProps & RouteComponentP
         }
 
         return (
-            <Spin size='large' fullscreen className='cvat-spinner' tip='Connecting...' />
+            <Spin size='large' fullscreen className='cvat-spinner' tip='正在连接…' />
         );
     }
 }

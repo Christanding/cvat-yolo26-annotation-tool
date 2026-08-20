@@ -428,6 +428,10 @@ function RemoteBrowser(props: Props): JSX.Element {
                     rowSelection={{
                         type: 'checkbox',
                         selectedRowKeys,
+                        columnTitle: (checkbox): React.ReactNode => React.cloneElement(
+                            checkbox as React.ReactElement,
+                            { 'aria-label': resource === 'workspace' ? '全选' : 'Select all' },
+                        ),
                         onChange: (_selectedRowKeys) => {
                             let copy = _selectedRowKeys.slice(0);
 
@@ -497,8 +501,10 @@ function RemoteBrowser(props: Props): JSX.Element {
                         },
                         preserveSelectedRowKeys: true,
                         getCheckboxProps: (record: Node) => {
+                            const accessibilityLabel = resource === 'workspace' ?
+                                `选择 ${record.name}` : `Select ${record.name}`;
                             if (record.type !== 'DIR') {
-                                return {};
+                                return { 'aria-label': accessibilityLabel };
                             }
 
                             const strKeys = selectedRowKeys.map((key) => key.toLocaleString());
@@ -511,11 +517,12 @@ function RemoteBrowser(props: Props): JSX.Element {
 
                             if (some && !every) {
                                 return {
+                                    'aria-label': accessibilityLabel,
                                     indeterminate: true,
                                 };
                             }
 
-                            return {};
+                            return { 'aria-label': accessibilityLabel };
                         },
                     }}
                     expandable={{

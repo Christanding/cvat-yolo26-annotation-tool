@@ -161,7 +161,7 @@ export default class LabelForm extends React.Component<Props> {
                 rules={[
                     {
                         required: true,
-                            message: '请输入类别名称',
+                        message: '请输入属性名称',
                     },
                     {
                         pattern: patterns.validateAttributeName.pattern,
@@ -498,7 +498,7 @@ export default class LabelForm extends React.Component<Props> {
                 rules={[
                     {
                         required: true,
-                        message: 'Please specify a name',
+                        message: '请输入类别名称',
                     },
                     {
                         pattern: patterns.validateAttributeName.pattern,

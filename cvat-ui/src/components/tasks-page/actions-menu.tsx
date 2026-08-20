@@ -153,11 +153,11 @@ function TaskActionsComponent(props: Readonly<Props>): JSX.Element {
         const tasksToDelete = currentTasks.filter((task) => selectedIds.includes(task.id));
         Modal.confirm({
             title: isBulkMode ?
-                `Delete ${tasksToDelete.length} selected tasks` :
-                `The task ${taskInstance.id} will be deleted`,
+                `确认删除选中的 ${tasksToDelete.length} 个任务？` :
+                `确认删除任务 #${taskInstance.id}？`,
             content: isBulkMode ?
-                'All related data (images, annotations) for all selected tasks will be lost. Continue?' :
-                'All related data (images, annotations) will be lost. Continue?',
+                '所选任务及其标注记录将被删除，工作区中的原始图片和视频不会被删除。' :
+                '任务及其标注记录将被删除，工作区中的原始图片和视频不会被删除。',
             className: 'cvat-modal-confirm-delete-task',
             onOk: () => {
                 dispatch(makeBulkOperationAsync(
@@ -165,14 +165,14 @@ function TaskActionsComponent(props: Readonly<Props>): JSX.Element {
                     async (task) => {
                         await dispatch(deleteTaskAsync(task));
                     },
-                    (task, idx, total) => `Deleting task #${task.id} (${idx + 1}/${total})`,
+                    (task, idx, total) => `正在删除任务 #${task.id}（${idx + 1}/${total}）`,
                 ));
             },
             okButtonProps: {
                 type: 'primary',
                 danger: true,
             },
-            okText: isBulkMode ? 'Delete selected' : 'Delete',
+            okText: isBulkMode ? '删除所选任务' : '删除',
         });
     }, [taskInstance, currentTasks, selectedIds, isBulkMode]);
 
@@ -180,14 +180,14 @@ function TaskActionsComponent(props: Readonly<Props>): JSX.Element {
         stopEditField();
 
         const tasksToUpdate = onUpdateTask ? [taskInstance] : collectObjectsForBulkUpdate();
-        const updateCurrent = () => {
+        const updateCurrent = (): void => {
             taskInstance.organizationId = newOrganization?.id ?? null;
             onUpdateTask!(taskInstance).then(() => {
                 history.push('/tasks');
             });
         };
 
-        const updateBulk = () => {
+        const updateBulk = (): void => {
             dispatch(makeBulkOperationAsync(
                 tasksToUpdate,
                 async (task) => {

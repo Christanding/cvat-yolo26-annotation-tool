@@ -68,6 +68,7 @@ MVP 产品需求已冻结，核心功能代码已实现并进入 Windows 发布�
 - 本地工作区选择器通过 `/api/local/workspace` 读取受限文件列表，选中的相对路径仍按 CVAT `server_files` 流程创建任务。
 - `GET /api/local/videos` 递归发现工作区内的 MP4、MOV；`POST /api/local/extractions` 创建抽帧任务，`GET /api/local/extractions/<id>` 返回进度和统计。
 - 视频抽帧输出 PNG 到源视频同级的 `images/<视频名>/`，仅在当前视频内按“上一张保留帧”去重，覆盖前必须由用户确认。
+- `GET /api/local/tasks` 返回可追加图片的本地工作区任务；`POST /api/local/tasks/<id>/images` 将所选抽帧目录中的新图片追加到任务末尾，新图片保持“未检查”。
 - 标注工作区仅暴露 Detect 矩形框所需工具；`A`/`D` 固定为上一张/下一张，切图前保存当前标注。
 - `GET/POST /api/local/tasks/<id>/frames/<frame>/status` 管理单图完成状态，`GET/POST /api/local/tasks/<id>/review` 返回或完成整任务图片检查状态。
 - `YOLO26 Detect 标注包` 是唯一产品导入导出格式；顶层 `POST /api/local/packages` 从 ZIP 创建任务，任务内导入用于覆盖当前标注。

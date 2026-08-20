@@ -6,32 +6,32 @@
 const validationPatterns = {
     validatePasswordLength: {
         pattern: /^(?=.{8,256}$)/,
-        message: 'Password must be between 8 and 256 characters',
+        message: '密码长度必须为 8至256 个字符',
     },
 
     passwordContainsNumericCharacters: {
         pattern: /(?=.*[0-9])/,
-        message: 'Password must have at least 1 numeric characters',
+        message: '密码至少包含 1 个数字',
     },
 
     passwordContainsUpperCaseCharacter: {
         pattern: /(?=.*[A-Z])/,
-        message: 'Password must have at least 1 uppercase alphabetical character',
+        message: '密码至少包含 1 个大写字母',
     },
 
     passwordContainsLowerCaseCharacter: {
         pattern: /(?=.*[a-z])/,
-        message: 'Password must have at least 1 lowercase alphabetical character',
+        message: '密码至少包含 1 个小写字母',
     },
 
     validateUsernameLength: {
         pattern: /^.{5,150}$/u,
-        message: 'Username must be between 5 and 150 characters',
+        message: '用户名长度必须为 5至150 个字符',
     },
 
     validateUsernameCharacters: {
         pattern: /^[\p{L}\p{N}_@.+-]+$/u,
-        message: 'Only letters, numbers, and @/./+/-/_ characters are available',
+        message: '用户名只能包含字母、数字和 @/./+/-/_',
     },
 
     /*
@@ -47,38 +47,38 @@ const validationPatterns = {
     validateName: {
 
         pattern: /^(\p{L}|\p{Pd}|\p{Cf}|\p{Pc}|['\s]){2,}$/gu,
-        message: 'Invalid name',
+        message: '名称格式不正确',
     },
 
     validateAttributeName: {
         pattern: /\S+/,
-        message: 'Invalid name',
+        message: '名称不能为空',
     },
 
     validateLabelName: {
         pattern: /\S+/,
-        message: 'Invalid name',
+        message: '名称不能为空',
     },
 
     validateAttributeValue: {
         pattern: /\S+/,
-        message: 'Invalid attribute value',
+        message: '属性值不能为空',
     },
 
     validateURL: {
 
         pattern: /^(https?:\/\/)[^\s$.?#].[^\s]*$/, // url, ip
-        message: 'URL is not valid',
+        message: 'URL 格式不正确',
     },
 
     validateOrganizationSlug: {
         pattern: /^[a-zA-Z\d]+$/,
-        message: 'Only Latin characters and numbers are allowed',
+        message: '只允许拉丁字母和数字',
     },
 
     validatePhoneNumber: {
         pattern: /^[+]*[-\s0-9]*$/g,
-        message: 'Input phone number is not correct',
+        message: '电话号码格式不正确',
     },
 };
 

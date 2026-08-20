@@ -263,19 +263,25 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
                 return;
             }
             // have to validate format before so it would not be undefined
+            let destinationStorage = new Storage(targetStorage);
+            if (localTaskExport) {
+                destinationStorage = new Storage({ location: StorageLocation.LOCAL });
+            } else if (useDefaultTargetStorage) {
+                destinationStorage = new Storage({
+                    location: defaultStorageLocation,
+                    cloudStorageId: defaultStorageCloudId,
+                });
+            }
+            const customName = exportValues.customName ?
+                appendExportExtension(exportValues.customName, exportExtension) : undefined;
             dispatch(
                 exportDatasetAsync(
                     instance as ProjectOrTaskOrJob,
                     exportValues.selectedFormat as string,
                     exportValues.saveImages,
                     localTaskExport || useDefaultTargetStorage,
-                    localTaskExport ? new Storage({ location: StorageLocation.LOCAL }) : (
-                        useDefaultTargetStorage ? new Storage({
-                            location: defaultStorageLocation,
-                            cloudStorageId: defaultStorageCloudId,
-                        }) : new Storage(targetStorage)
-                    ),
-                    exportValues.customName ? appendExportExtension(exportValues.customName, exportExtension) : undefined,
+                    destinationStorage,
+                    customName,
                 ),
             );
             closeModal();
@@ -443,6 +449,11 @@ function ExportDatasetModal(props: Readonly<StateToProps>): JSX.Element {
                     onChangeLocationValue={(value: StorageLocation) => { setTargetStorage({ location: value }); }}
                     disableSwitch={isBulkMode}
                 />}
+                {localTaskExport && (
+                    <Text type='secondary'>
+                        文件生成后会由浏览器下载。如需每次选择目录，请在 Edge 的下载设置中开启“每次下载前询问保存位置”。
+                    </Text>
+                )}
             </Form>
         </Modal>
     );

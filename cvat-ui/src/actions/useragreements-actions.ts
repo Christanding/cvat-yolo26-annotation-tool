@@ -14,7 +14,7 @@ export enum UserAgreementsActionTypes {
     GET_USER_AGREEMENTS_FAILED = 'GET_USER_AGREEMENTS_FAILED',
 }
 
-const userAgreementsActions = {
+export const userAgreementsActions = {
     getUserAgreements: () => createAction(UserAgreementsActionTypes.GET_USER_AGREEMENTS),
     getUserAgreementsSuccess: (userAgreements: UserAgreement[]) => (
         createAction(UserAgreementsActionTypes.GET_USER_AGREEMENTS_SUCCESS, userAgreements)

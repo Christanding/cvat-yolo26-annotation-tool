@@ -39,6 +39,18 @@ export interface ExtractionStatus {
     error?: string;
 }
 
+export interface AppendableTask {
+    id: number;
+    name: string;
+    size: number;
+}
+
+export interface TaskImageAppendResult {
+    task_id: number;
+    added_count: number;
+    total_count: number;
+}
+
 export interface PackageImportStatus {
     id: string;
     status: string;
@@ -126,6 +138,17 @@ export function createExtraction(parameters: ExtractionParameters): Promise<{ id
 
 export function getExtraction(id: string): Promise<ExtractionStatus> {
     return request<ExtractionStatus>(`/api/local/extractions/${encodeURIComponent(id)}`);
+}
+
+export function listAppendableTasks(): Promise<AppendableTask[]> {
+    return request<AppendableTask[]>('/api/local/tasks');
+}
+
+export function appendTaskImages(taskID: number, path: string): Promise<TaskImageAppendResult> {
+    return request<TaskImageAppendResult>(`/api/local/tasks/${taskID}/images`, {
+        method: 'POST',
+        body: JSON.stringify({ path }),
+    });
 }
 
 export function createPackageImport(name: string, file: File): Promise<{ id: string; status: string }> {

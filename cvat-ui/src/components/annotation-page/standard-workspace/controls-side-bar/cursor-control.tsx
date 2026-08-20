@@ -25,8 +25,8 @@ export interface Props {
 
 const componentShortcuts = {
     CANCEL: {
-        name: 'Cancel',
-        description: 'Cancel any active canvas mode',
+        name: '取消当前操作',
+        description: '退出当前画布操作模式',
         sequences: ['esc'],
         scope: ShortcutScope.STANDARD_WORKSPACE_CONTROLS,
     },

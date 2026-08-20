@@ -12,7 +12,12 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
+from rest_framework.status import (
+    HTTP_202_ACCEPTED,
+    HTTP_400_BAD_REQUEST,
+    HTTP_404_NOT_FOUND,
+    HTTP_409_CONFLICT,
+)
 from rest_framework.views import APIView
 
 from cvat.apps.engine.models import ServerFile, Task
@@ -30,6 +35,11 @@ from .reviews import (
     complete_frame,
     frame_status,
     review_summary,
+)
+from .task_images import (
+    TaskImageAppendError,
+    append_workspace_images,
+    list_appendable_tasks,
 )
 from .workspace import WorkspacePathError, resolve_workspace_file, scan_workspace
 
@@ -86,6 +96,22 @@ class ExtractionStatusSerializer(serializers.Serializer):
     progress = serializers.IntegerField()
     result = ExtractionResultSerializer(required=False)
     error = serializers.CharField(required=False)
+
+
+class AppendableTaskSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    size = serializers.IntegerField()
+
+
+class TaskImageAppendRequestSerializer(serializers.Serializer):
+    path = serializers.CharField()
+
+
+class TaskImageAppendResultSerializer(serializers.Serializer):
+    task_id = serializers.IntegerField()
+    added_count = serializers.IntegerField()
+    total_count = serializers.IntegerField()
 
 
 class PackageImportRequestSerializer(serializers.Serializer):
@@ -201,17 +227,17 @@ class ExtractionListView(APIView):
 
         relative_output = output_path_for_video(PurePosixPath(relative_path))
         output = root.resolve(strict=True).joinpath(*relative_output.parts)
-        if output.exists() and not parameters["overwrite"]:
-            return Response(
-                {"code": "output_exists", "message": "抽帧目录已存在，请选择覆盖或取消。"},
-                status=HTTP_409_CONFLICT,
-            )
         if output.exists() and is_path_referenced(
             relative_output,
             list(ServerFile.objects.values_list("file", flat=True)),
         ):
             return Response(
                 {"code": "output_in_use", "message": "抽帧目录已被标注任务使用，不能覆盖。"},
+                status=HTTP_409_CONFLICT,
+            )
+        if output.exists() and not parameters["overwrite"]:
+            return Response(
+                {"code": "output_exists", "message": "抽帧目录已存在，请选择覆盖或取消。"},
                 status=HTTP_409_CONFLICT,
             )
 
@@ -252,6 +278,59 @@ class ExtractionDetailView(APIView):
         elif status_value == "failed":
             response["error"] = job.meta.get("error", "抽帧失败，请检查视频文件和参数。")
         return Response(response)
+
+
+class AppendableTaskListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="List tasks that can accept more workspace images",
+        responses=AppendableTaskSerializer(many=True),
+        tags=["local annotation"],
+    )
+    def get(self, request):
+        tasks = [task.as_dict() for task in list_appendable_tasks(request.user)]
+        return Response(AppendableTaskSerializer(tasks, many=True).data)
+
+
+class TaskImageAppendView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Append workspace images to an existing task",
+        request=TaskImageAppendRequestSerializer,
+        responses=TaskImageAppendResultSerializer,
+        tags=["local annotation"],
+    )
+    def post(self, request, task_id: int):
+        serializer = TaskImageAppendRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        task = owned_task(request, task_id)
+        try:
+            result = append_workspace_images(
+                task,
+                Path(settings.LOCAL_WORKSPACE_ROOT),
+                serializer.validated_data["path"],
+            )
+        except WorkspacePathError:
+            return Response(
+                {
+                    "code": "invalid_path",
+                    "message": "所选抽帧目录不存在，或不在工作区内。",
+                },
+                status=HTTP_400_BAD_REQUEST,
+            )
+        except TaskImageAppendError as error:
+            status = (
+                HTTP_409_CONFLICT
+                if error.code in {"task_not_appendable", "no_new_images"}
+                else HTTP_400_BAD_REQUEST
+            )
+            return Response(
+                {"code": error.code, "message": str(error)},
+                status=status,
+            )
+        return Response(TaskImageAppendResultSerializer(result.as_dict()).data)
 
 
 class PackageImportListView(APIView):

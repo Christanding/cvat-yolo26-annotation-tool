@@ -17,121 +17,21 @@
 
 当前不支持分割、关键点、旋转框、3D、目标跟踪、多人协作和自动划分训练集。
 
-## Windows 部署
+## Windows 安装
 
-下面的方式和 CVAT Community 官方部署流程基本一致：下载源码，配置本地目录，再用 Docker Compose 启动。
+普通使用者不需要下载本仓库的完整 CVAT 源码。请使用只有 7 个文件的 [简化部署仓库](https://github.com/Christanding/cvat-yolo26-annotation-deploy)。
 
-### 准备环境
-
-请先安装：
-
-- Windows 10/11 x64；
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)，使用 WSL 2 后端；
-- [Git for Windows](https://git-scm.com/download/win)；
-- Microsoft Edge，或 Google Chrome。
-
-启动 Docker Desktop，确认下面的命令可以正常执行：
+安装 Docker Desktop 和 Git 后，在 PowerShell 中运行：
 
 ```powershell
-docker version
-docker compose version
+git clone https://github.com/Christanding/cvat-yolo26-annotation-deploy.git
+cd cvat-yolo26-annotation-deploy
+powershell -ExecutionPolicy Bypass -File .\Start.ps1
 ```
 
-项目的 Compose 配置使用 `!override`。如果 Docker 提示无法识别这个标签，请先更新 Docker Desktop。
+启动脚本会自动创建工作目录、下载镜像、启动服务、创建本地账户并打开 Edge。日常启动、停止、更新和更换工作目录的方式都写在部署仓库的 README 中。
 
-### 1. 获取源码
-
-在 PowerShell 中运行：
-
-```powershell
-git clone https://github.com/Christanding/cvat-yolo26-annotation-tool.git
-cd cvat-yolo26-annotation-tool
-```
-
-### 2. 准备工作目录
-
-工作目录用于存放原始图片、视频、抽帧结果和 CVAT 的持久化数据。建议使用固定路径，例如：
-
-```powershell
-New-Item -ItemType Directory -Force D:\YOLO-Workspace
-```
-
-任务开始后，不要移动、重命名或删除任务引用的图片、视频和文件夹。
-
-### 3. 配置环境变量
-
-复制配置模板：
-
-```powershell
-Copy-Item .env.example .env
-```
-
-打开 `.env`，按实际情况修改工作目录：
-
-```dotenv
-CVAT_VERSION=v2.73.0
-APP_VERSION=dev
-CVAT_HOST=localhost
-CVAT_WORKSPACE_ROOT=D:/YOLO-Workspace
-CVAT_STATE_DIR=D:/YOLO-Workspace/.cvat-local
-```
-
-`CVAT_STATE_DIR` 必须位于工作目录内，并指向 `.cvat-local`。这个目录保存数据库、账户、任务和标注，不要手动修改，也不要提交到 Git。
-
-### 4. 构建并启动
-
-```powershell
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
-```
-
-第一次启动会下载基础镜像并构建本项目的 Server 和 UI，因此需要联网，也会比日常启动耗时更长。
-
-查看运行状态：
-
-```powershell
-docker compose -f docker-compose.yml -f docker-compose.local.yml ps
-```
-
-### 5. 创建账户
-
-首次部署后创建一个本地账户：
-
-```powershell
-docker exec -it cvat_server python manage.py createsuperuser
-```
-
-按照提示输入用户名和密码。创建完成后，用 Edge 或 Chrome 打开：
-
-<http://localhost:8080>
-
-登录一次后，浏览器会保留登录状态。
-
-## 日常使用
-
-启动：
-
-```powershell
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
-```
-
-停止：
-
-```powershell
-docker compose -f docker-compose.yml -f docker-compose.local.yml stop
-```
-
-停止服务不会删除任务、标注或源文件。服务构建完成后，标注、抽帧和导入导出可以在断网环境下使用。
-
-## 更新
-
-更新前先停止正在进行的导入、导出和抽帧任务，然后运行：
-
-```powershell
-git pull --ff-only
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
-```
-
-更新不会主动删除 `.cvat-local`。需要迁移到另一台电脑时，先停止服务，再复制整个工作目录；原始媒体和 `.cvat-local` 必须一起保留。
+本仓库保留完整源码是为了开发、审查许可证和跟进 CVAT 上游版本，不是普通使用者的安装包。需要从源码调试时，才使用 `.env.example`、`docker-compose.yml` 和 `docker-compose.local.yml`。
 
 ## 标注包格式
 

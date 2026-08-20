@@ -160,37 +160,37 @@ dataset/
 - 顶层只保留：任务列表、新建任务、图片标注、视频抽帧、导入、导出、设置。
 - 隐藏组织、云存储、审核、分析、3D和自动标注等无关入口，但保留对应上游核心代码。
 - 标注界面只显示矩形框、选择、缩放、平移、撤销/重做、删除和图片切换。
-- 首次部署后通过管理命令创建一个本地账户；用户首次登录一次，之后由浏览器保持登录状态。
+- 首次启动时由部署脚本调用管理命令创建一个本地账户；用户首次登录一次，之后由浏览器保持登录状态。
 
 ## 10. Windows部署、启动与更新
 
 ### 10.1 部署形式
 
-- 采用公开源码加 Docker Compose 部署，保持与 CVAT Community 官方流程一致。
+- 采用公开源码、公开预构建镜像和 Docker Compose 部署，保持与 CVAT Community 的容器化运行方式一致。
+- 完整 CVAT fork 用于开发；普通使用者只克隆独立的简化部署仓库 `Christanding/cvat-yolo26-annotation-deploy`。
 - 用户预先安装 Docker Desktop、Git 和受支持的 Chromium 浏览器；Docker Desktop 使用 WSL2 后端。
 - Docker Desktop 由用户从官方渠道安装并接受其许可条款，本项目不捆绑 Docker Desktop。
-- 首次部署从 GitHub 获取源码，并联网下载基础镜像和构建依赖。
-- 本项目的 Server、UI 镜像在用户电脑上由源码构建，不提交镜像归档到 Git 仓库。
+- 首次部署从 GitHub 获取简化部署仓库，并从公开 GHCR 下载固定版本的 `linux/amd64` Server、UI 镜像和官方运行依赖。
+- 镜像由完整源码仓库的手动 GitHub Actions 工作流构建；Git 仓库不提交镜像归档。
 
 ### 10.2 首次部署
 
 用户在 PowerShell 中完成：
 
-1. 克隆 GitHub 仓库。
-2. 从 `.env.example` 创建 `.env`，设置固定工作根目录和 `.cvat-local` 持久化目录。
-3. 使用 `docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build` 构建并启动服务。
-4. 使用 Django 管理命令创建本地账户。
-5. 使用 Microsoft Edge 或 Google Chrome 打开应用。
+1. 克隆简化部署仓库。
+2. 运行 `Start.ps1`；脚本自动检查 Docker、创建固定工作目录、生成本地配置并启动 Compose。
+3. 按提示设置一次本地账户和密码。
+4. 脚本优先使用 Microsoft Edge 打开应用，未找到 Edge 时使用系统默认浏览器。
 
 ### 10.3 日常使用
 
-- 用户通过 Docker Compose 启动或停止应用。
+- 用户通过 `Start.ps1` 和 `Stop.ps1` 启动或停止应用，无需手动编辑 `.env` 或输入 Compose 参数。
 - 提供停止应用入口，但停止操作不得删除容器数据、任务或源文件。
 - 首次构建完成后，启动、标注、抽帧、导入和导出均可断网运行。
 
 ### 10.4 更新与卸载
 
-- 更新通过 `git pull --ff-only` 获取源码，再由 Docker Compose 重新构建和启动服务。
+- 更新通过 `git pull --ff-only` 获取部署文件；启动脚本在版本变化时下载对应的新镜像并启动服务。
 - 更新前后必须保留 `.cvat-local/`、任务、标注、原图、视频和抽帧目录。
 - 删除源码目录或容器不得删除 `.cvat-local/` 和工作目录内的用户数据。
 - 删除持久化数据必须作为独立操作，由用户明确确认，不能附带在普通卸载中。
@@ -215,9 +215,9 @@ dataset/
 
 MVP 至少验证以下真实流程：
 
-1. 已安装 Docker Desktop 和 Git 的 Windows 10/11 x64 电脑可以从公开仓库完成源码部署。
-2. Docker Compose 可以从源码构建并启动服务，Edge 和 Chrome 均可访问。
-3. 首次构建完成后，断网仍可启动应用并完成核心工作流。
+1. 已安装 Docker Desktop 和 Git 的 Windows 10/11 x64 电脑可以从公开的简化部署仓库完成部署。
+2. Docker Compose 可以拉取固定的公开镜像并启动服务，Edge 和 Chrome 均可访问。
+3. 首次镜像下载完成后，断网仍可启动应用并完成核心工作流。
 4. 固定工作区新增视频后，手动刷新可以发现并抽帧。
 5. H.264/H.265 的 MP4、MOV按指定时间范围和整数秒间隔输出 PNG。
 6. 三档相似去重输出正确统计，原视频保持不变。

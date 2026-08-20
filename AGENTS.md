@@ -12,9 +12,9 @@ MVP 产品需求已冻结，核心功能代码已实现并进入 Windows 发布�
 
 - 基于 CVAT Community 进行最小化二次开发，采用 Web 访问方式，并优先使用 Docker Compose 部署。
 - 固定上游版本为 CVAT Community `v2.73.0`，不跟随浮动的 `develop` 或 `latest`。
-- 产品按 Windows 10/11 x64 单用户本地实例交付，每名内部用户独立安装，不建设团队协作服务器。
+- 产品按 Windows 10/11 x64 单用户本地实例交付，每名用户独立部署，不建设团队协作服务器。
 - MVP 使用固定本地工作根目录，任务直接引用其中的源文件，不复制或修改原始媒体。
-- 应用通过内部离线大安装包交付；Docker Desktop 由用户从官方渠道预先安装，Edge为首选浏览器，Chrome为回退。
+- 应用通过公开源码和 Docker Compose 部署；Docker Desktop 与 Git 由用户从官方渠道预先安装，Edge为首选浏览器，Chrome为回退。
 - 尽量通过官方 API、扩展点和独立服务实现项目特有能力，减少对 CVAT 核心代码的修改和长期升级负担。
 - 引入 CVAT 前必须固定稳定版本，并核对该版本的官方文档、许可证、依赖和升级说明。
 
@@ -53,9 +53,9 @@ MVP 产品需求已冻结，核心功能代码已实现并进入 Windows 发布�
 - `CVAT_WORKSPACE_ROOT` 是用户工作根目录，容器只读挂载到 `/home/django/share`。
 - `CVAT_STATE_DIR` 必须指向工作根目录内的 `.cvat-local`，数据库、任务数据、密钥、日志和缓存均绑定到其子目录。
 - `.cvat-local` 在共享目录视图中使用临时挂载遮蔽，不能作为标注源目录出现。
-- `docker-compose.local.yml` 使用 Compose `!override` 关闭默认分析依赖，安装程序必须检查所装 Docker Compose 支持该语法。
+- `docker-compose.local.yml` 使用 Compose `!override` 关闭默认分析依赖；README 必须提示用户使用支持该语法的新版 Docker Compose。
 - 默认不启动 `upstream-analytics` 和 `upstream-extra` 配置组；不要在 MVP 安装流程中启用它们。
-- `APP_VERSION` 控制本项目 Server/UI 镜像标签；正式离线包必须构建 `linux/amd64` 镜像，不能把开发机的 ARM 镜像交付给 Windows x64 用户。
+- `APP_VERSION` 控制本项目 Server/UI 镜像标签；Windows x64 用户由本机 Docker Desktop 从源码构建 Linux 容器镜像。
 
 ## Implementation Details
 
@@ -72,5 +72,5 @@ MVP 产品需求已冻结，核心功能代码已实现并进入 Windows 发布�
 - 标注工作区仅暴露 Detect 矩形框所需工具；`A`/`D` 固定为上一张/下一张，切图前保存当前标注。
 - `GET/POST /api/local/tasks/<id>/frames/<frame>/status` 管理单图完成状态，`GET/POST /api/local/tasks/<id>/review` 返回或完成整任务图片检查状态。
 - `YOLO26 Detect 标注包` 是唯一产品导入导出格式；顶层 `POST /api/local/packages` 从 ZIP 创建任务，任务内导入用于覆盖当前标注。
-- Windows 离线安装源码位于 `installer/windows/`；构建产物位于已忽略的 `dist/windows/`，不得提交镜像归档或 `Setup.exe`。
+- GitHub 仓库只提交源码、Compose 配置和文档；不得提交 `.env`、`.cvat-local`、容器镜像归档或用户数据。
 - 设置弹窗只显示当前图片框选流程需要的“图像浏览”和“标注界面”选项。

@@ -31,7 +31,7 @@
 | Traefik | `v3.6` | MIT | 本机反向代理 |
 | Open Policy Agent | `1.12.2` | Apache-2.0 | CVAT 权限策略 |
 
-前端依赖由根目录 `yarn.lock` 锁定，Python 依赖由 `cvat/requirements/` 中的固定版本文件管理。PostgreSQL 和 Traefik 的上游 Compose 标签只固定到版本系列，正式离线发布时必须记录实际打包镜像版本，不能在用户安装阶段在线拉取浮动镜像。
+前端依赖由根目录 `yarn.lock` 锁定，Python 依赖由 `cvat/requirements/` 中的固定版本文件管理。PostgreSQL 和 Traefik 的上游 Compose 标签只固定到版本系列，升级时必须核对实际拉取的镜像版本和上游变更。
 
 本项目默认不启动 ClickHouse、Vector、Grafana，以及 Webhook、质量报告和共识审核工作进程；这些上游能力不在 MVP 范围内，但源码仍保留以维持上游升级路径。
 
@@ -40,8 +40,8 @@
 1. 阅读目标版本官方 Release Notes、升级说明和安全公告。
 2. 获取新的正式稳定标签，不跟随 `develop`。
 3. 比较本项目修改过的文件和上游变化，先解决真实冲突。
-4. 验证数据库迁移、任务与标注保留、图片标注、抽帧、导入导出和离线安装主路径。
-5. 验证通过后再更新固定版本、镜像标签和离线安装包。
+4. 验证数据库迁移、任务与标注保留、图片标注、抽帧、导入导出和 Windows 源码部署主路径。
+5. 验证通过后再更新固定版本、镜像标签和部署说明。
 
 上游升级不得静默覆盖本项目修改，也不得以构建成功代替真实数据流程验证。
 
@@ -50,4 +50,4 @@
 - CVAT Community 核心代码为 MIT License，根目录 `LICENSE` 必须保留。
 - CVAT 官方说明指出，部分 serverless 模型资产及第三方组件可能具有单独许可证。
 - MVP 不启用 serverless 自动标注组件；未来启用前必须重新核对模型、权重、运行时和发布方式的许可证。
-- Docker Desktop 是用户独立安装的外部运行环境，不捆绑在本项目安装包中。
+- Docker Desktop 和 Git 是用户独立安装的外部运行环境，不由本项目捆绑分发。

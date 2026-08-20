@@ -52,7 +52,7 @@ MVP 产品需求已冻结，核心功能代码已实现并进入 Windows 发布�
 - 启动命令：`docker compose -f docker-compose.yml -f docker-compose.local.yml up -d`。
 - 普通用户使用公开仓库 `Christanding/cvat-yolo26-annotation-deploy` 中的 `Start.ps1` 和 `Stop.ps1`，不克隆完整 CVAT fork，也不手动编辑 `.env`。
 - `CVAT_WORKSPACE_ROOT` 是用户工作根目录，容器只读挂载到 `/home/django/share`。
-- `CVAT_STATE_DIR` 必须指向工作根目录内的 `.cvat-local`，数据库、任务数据、密钥、日志和缓存均绑定到其子目录。
+- `CVAT_STATE_DIR` 必须指向工作根目录内的 `.cvat-local`，数据库、任务数据、密钥和日志均绑定到其子目录；Kvrocks 只保存可重建的运行队列缓存，沿用上游 Docker 卷。
 - `.cvat-local` 在共享目录视图中使用临时挂载遮蔽，不能作为标注源目录出现。
 - 源码开发的 `docker-compose.local.yml` 使用 Compose `!override` 关闭默认分析依赖；简化部署仓库使用独立 Compose 文件，不依赖该标签。
 - 默认不启动 `upstream-analytics` 和 `upstream-extra` 配置组；不要在 MVP 安装流程中启用它们。

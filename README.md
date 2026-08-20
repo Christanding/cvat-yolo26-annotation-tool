@@ -19,7 +19,7 @@
 
 ## Windows 安装
 
-普通使用者不需要下载本仓库的完整 CVAT 源码。请使用只有 7 个文件的 [简化部署仓库](https://github.com/Christanding/cvat-yolo26-annotation-deploy)。
+普通使用者不需要下载本仓库的完整 CVAT 源码。请使用只有 7 个文件的 [简化部署仓库](https://github.com/Christanding/cvat-yolo26-annotation-deploy)。部署仓库和运行镜像均为公开资源，安装者不需要登录 GitHub 或申请私人仓库权限。
 
 安装 Docker Desktop 和 Git 后，在 PowerShell 中运行：
 
